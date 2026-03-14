@@ -29,20 +29,20 @@ This system replaces manual logging with a fast, accurate QR-based process. Any 
 
 ## Features
 
-| Feature | Description |
-|---|---|
-| **QR Code Scanning** | Works with USB plug-in scanners or existing QR codes on employee IDs and equipment |
-| **Real-Time Dashboard** | Live view of all device statuses, active borrows, and today's transaction count |
-| **Borrow & Return** | Two-scan process — employee ID then device QR |
-| **Proxy Return** | Any staff member can return equipment on behalf of the original borrower |
-| **Designated Shelf Location** | Every device has a permanent cabinet and shelf — displayed automatically on return |
-| **Manual Reconciliation** | IT staff can override device status during physical inventory, with reason and timestamp logged |
-| **Equipment Audit Log** | Full history per device — who borrowed it, who returned it, and when |
-| **Employee Audit Log** | Full borrowing history per employee across all devices |
-| **CSV Export** | Export both audit logs to CSV for record-keeping and management review |
-| **Role-Based Access** | Separate access levels for Admin, IT Staff, and Borrower |
-| **Dark Mode** | Toggle between light and dark theme, preference saved across sessions |
-| **Locally Hosted** | Runs entirely on your office network — no internet required |
+| Feature                       | Description                                                                                     |
+| ----------------------------- | ----------------------------------------------------------------------------------------------- |
+| **QR Code Scanning**          | Works with USB plug-in scanners or existing QR codes on employee IDs and equipment              |
+| **Real-Time Dashboard**       | Live view of all device statuses, active borrows, and today's transaction count                 |
+| **Borrow & Return**           | Two-scan process — employee ID then device QR                                                   |
+| **Proxy Return**              | Any staff member can return equipment on behalf of the original borrower                        |
+| **Designated Shelf Location** | Every device has a permanent cabinet and shelf — displayed automatically on return              |
+| **Manual Reconciliation**     | IT staff can override device status during physical inventory, with reason and timestamp logged |
+| **Equipment Audit Log**       | Full history per device — who borrowed it, who returned it, and when                            |
+| **Employee Audit Log**        | Full borrowing history per employee across all devices                                          |
+| **CSV Export**                | Export both audit logs to CSV for record-keeping and management review                          |
+| **Role-Based Access**         | Separate access levels for Admin, IT Staff, and Borrower                                        |
+| **Dark Mode**                 | Toggle between light and dark theme, preference saved across sessions                           |
+| **Locally Hosted**            | Runs entirely on your office network — no internet required                                     |
 
 ---
 
@@ -69,15 +69,19 @@ C:/xampp/htdocs/inventory/
 Open `C:/xampp/apache/conf/httpd.conf` and make these two changes:
 
 Uncomment the rewrite module (remove the `#`):
+
 ```apache
 LoadModule rewrite_module modules/mod_rewrite.so
 ```
 
 Find the `<Directory "C:/xampp/htdocs">` block and change:
+
 ```apache
 AllowOverride None
 ```
+
 to:
+
 ```apache
 AllowOverride All
 ```
@@ -99,6 +103,7 @@ http://localhost/inventory/public
 ## Database Setup
 
 **1. Open phpMyAdmin**
+
 ```
 http://localhost/phpmyadmin
 ```
@@ -197,11 +202,11 @@ inventory/
 
 ## User Roles
 
-| Role | Access |
-|---|---|
-| **Admin** | Full access — manages devices, employees, views all reports, exports data |
+| Role         | Access                                                                    |
+| ------------ | ------------------------------------------------------------------------- |
+| **Admin**    | Full access — manages devices, employees, views all reports, exports data |
 | **IT Staff** | Can facilitate borrow/return transactions, manage devices, view employees |
-| **Borrower** | Can scan their own ID to borrow or return equipment independently |
+| **Borrower** | Can scan their own ID to borrow or return equipment independently         |
 
 ---
 
@@ -238,6 +243,7 @@ A USB QR scanner works like a keyboard — no drivers or extra code needed. Just
 3. Scan the device sticker — the form submits automatically
 
 **Scanner settings to verify** (usually configured via the scanner's setup sheet):
+
 - Suffix: **Enter** (auto-advances after each scan)
 - Mode: **USB HID Keyboard**
 
@@ -259,16 +265,16 @@ Works in Chrome, Firefox, and Edge. Firefox users on strict privacy mode are sup
 
 These accounts are created by the seed data in `inventory.sql`:
 
-| QR Code | Name | Role |
-|---|---|---|
-| `EMP-001` | James Allen Josue | Admin |
+| QR Code   | Name                  | Role     |
+| --------- | --------------------- | -------- |
+| `EMP-001` | James Allen Josue     | Admin    |
 | `EMP-002` | Frenz Darren Medallon | IT Staff |
-| `EMP-003` | Maria Santos | Borrower |
-| `EMP-004` | Carlos Reyes | Borrower |
-| `EMP-005` | Ana Lim | Borrower |
-| `EMP-006` | Rico Dela Cruz | Borrower |
-| `EMP-007` | Patricia Gomez | Borrower |
-| `EMP-008` | Ben Aquino | IT Staff |
+| `EMP-003` | Maria Santos          | Borrower |
+| `EMP-004` | Carlos Reyes          | Borrower |
+| `EMP-005` | Ana Lim               | Borrower |
+| `EMP-006` | Rico Dela Cruz        | Borrower |
+| `EMP-007` | Patricia Gomez        | Borrower |
+| `EMP-008` | Ben Aquino            | IT Staff |
 
 On the login page, enter any QR code above or use the quick login buttons.
 
@@ -299,4 +305,4 @@ Hard refresh with **Ctrl + Shift + R** to bypass the browser cache.
 ## Authors
 
 Prepared by **James Allen M. Josue** and **Frenz Darren J. Medallon**
-IT Department · March 2026
+Statistical Unit · March 2026
