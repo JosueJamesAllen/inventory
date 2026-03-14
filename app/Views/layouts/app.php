@@ -5,9 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= htmlspecialchars($appName) ?></title>
+  <script>
+    const t = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../../public/css/app.css">
+  <link rel="stylesheet" href="<?= '//' . $_SERVER['HTTP_HOST'] . '/inventory/public/css/app.css' ?>">
 </head>
 
 <body>
@@ -23,6 +27,10 @@
           <rect x="17" y="21" width="6" height="7" rx="1" fill="#38BDF8" />
         </svg>
         <span>IT Inventory</span>
+
+        <button class="btn-theme-icon" id="themeToggle" title="Toggle dark mode">
+          <span id="themeIcon">🌙</span>
+        </button>
       </div>
 
       <nav class="nav">
