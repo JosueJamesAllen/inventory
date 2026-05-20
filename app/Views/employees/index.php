@@ -28,7 +28,7 @@
     <tr>
       <td><strong><?= htmlspecialchars($e['name']) ?></strong></td>
       <td><?= htmlspecialchars($e['department']) ?></td>
-      <td><code><?= htmlspecialchars($e['qr_code']) ?></code></td>
+      <td><code><?= $isAdmin ? htmlspecialchars($e['qr_code']) : '••••••••' ?></code></td>
       <td><span class="role-badge role-<?= $e['role'] ?>"><?= str_replace('_', ' ', $e['role']) ?></span></td>
       <td><?= (int)$e['total_borrows'] ?></td>
       <td>
