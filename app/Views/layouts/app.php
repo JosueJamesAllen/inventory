@@ -118,6 +118,25 @@
   </div>
 
   <script src="/inventory/public/js/app.js"></script>
+
+  <div id="konami-overlay" style="display:none">
+    <div class="konami-inner">
+      <div class="konami-name">axellexious<span class="konami-cursor"></span></div>
+      <div class="konami-body">
+        built an inventory system<br>
+        for the government.<br>
+        <br>
+        it knows where the laptops are.
+      </div>
+      <div class="konami-org">
+        Philippine Statistics Authority<br>
+        Marinduque Provincial Statistics Office<br>
+        2025
+      </div>
+      <div class="konami-dismiss">click anywhere · esc to close</div>
+    </div>
+  </div>
+
 </body>
 
 </html>

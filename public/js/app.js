@@ -439,3 +439,29 @@ function goBack() {
   document.getElementById("section-return").style.display = "none";
   document.getElementById("type-prompt").style.display = "block";
 }
+
+// ── Konami code easter egg ─────────────────────────────────
+(function () {
+  const seq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  let pos = 0;
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      const el = document.getElementById('konami-overlay');
+      if (el) el.style.display = 'none';
+    }
+    pos = (e.key === seq[pos]) ? pos + 1 : (e.key === seq[0] ? 1 : 0);
+    if (pos === seq.length) {
+      pos = 0;
+      const el = document.getElementById('konami-overlay');
+      if (el) {
+        el.style.animation = 'none';
+        el.offsetWidth;
+        el.style.animation = '';
+        el.style.display = 'flex';
+      }
+    }
+  });
+  document.getElementById('konami-overlay')?.addEventListener('click', function () {
+    this.style.display = 'none';
+  });
+})();

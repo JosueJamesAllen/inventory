@@ -1763,3 +1763,63 @@ small {
   height: 1rem;
   cursor: pointer;
 }
+
+/* ── Konami easter egg ── */
+#konami-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  animation: konami-in .5s ease;
+}
+@keyframes konami-in {
+  from { opacity: 0; transform: scale(.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.konami-inner {
+  text-align: center;
+  font-family: 'Fira Code', monospace;
+  user-select: none;
+}
+.konami-name {
+  font-size: 2.25rem;
+  font-weight: 500;
+  letter-spacing: .12em;
+  color: #38bdf8;
+  margin-bottom: 2rem;
+}
+.konami-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 2rem;
+  background: #38bdf8;
+  vertical-align: middle;
+  margin-left: 6px;
+  animation: konami-blink 1s step-end infinite;
+}
+@keyframes konami-blink {
+  50% { opacity: 0; }
+}
+.konami-body {
+  font-size: .875rem;
+  color: rgba(255,255,255,0.45);
+  line-height: 2.2;
+}
+.konami-org {
+  margin-top: 2.5rem;
+  font-size: .7rem;
+  color: rgba(255,255,255,0.18);
+  letter-spacing: .15em;
+  line-height: 1.9;
+  text-transform: uppercase;
+}
+.konami-dismiss {
+  margin-top: 3rem;
+  font-size: .65rem;
+  color: rgba(255,255,255,0.1);
+  letter-spacing: .08em;
+}
