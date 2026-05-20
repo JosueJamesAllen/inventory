@@ -11,46 +11,81 @@
     </div>
 
     <h1>Sign In</h1>
-    <p class="auth-subtitle">Enter your Employee QR Code to continue</p>
+    <p class="auth-subtitle">Scan your employee ID card or enter your code manually</p>
 
     <?php if ($flash): ?>
     <div class="flash flash-<?= htmlspecialchars($flash['type']) ?>"><?= $flash['message'] ?></div>
     <?php endif; ?>
 
-    <form method="POST" action="/inventory/public/login">
+    <form method="POST" action="/inventory/public/login" id="login-form">
       <?= $csrf ?>
-      <div class="form-group">
-        <label for="qr_code">QR Code / Employee ID</label>
-        <input type="text" id="qr_code" name="qr_code" placeholder="e.g. EMP-001" autofocus required>
-        <small>Scan your employee ID card or enter your code manually.</small>
-      </div>
-      <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+      <input type="hidden" name="qr_code" id="login-qr-hidden">
     </form>
 
-    <div class="demo-section">
-      <p class="demo-label">Quick login for demo:</p>
-      <div class="demo-grid">
-        <?php
-        $demoAccounts = [
-            ['EMP-001', 'James Josue', 'Admin',    'chip-admin'],
-            ['EMP-002', 'Frenz Medallon', 'IT Staff', 'chip-it'],
-            ['EMP-003', 'Maria Santos', 'Borrower', 'chip-user'],
-            ['EMP-004', 'Carlos Reyes', 'Borrower', 'chip-user'],
-        ];
-        foreach ($demoAccounts as [$qr, $name, $role, $cls]):
-        ?>
-        <form method="POST" action="/inventory/public/login">
-          <?= $csrf ?>
-          <input type="hidden" name="qr_code" value="<?= $qr ?>">
-          <button type="submit" class="demo-btn <?= $cls ?>" title="<?= $name ?>">
-            <span class="demo-role"><?= $role ?></span>
-            <span class="demo-name"><?= $name ?></span>
-            <span class="demo-qr"><?= $qr ?></span>
-          </button>
-        </form>
-        <?php endforeach; ?>
+    <!-- Camera scanner -->
+    <div id="login-scanner">
+      <div class="video-wrap">
+        <video id="login-video" autoplay playsinline muted webkit-playsinline></video>
+        <div class="scan-line" id="login-scan-line"></div>
+        <canvas id="login-canvas" hidden></canvas>
+      </div>
+      <div class="scan-feedback" id="login-feedback">
+        <span class="feedback-icon">📷</span>
+        <span class="feedback-text">Waiting for QR code...</span>
+      </div>
+    </div>
+
+    <!-- Manual entry -->
+    <div style="margin-top:1rem">
+      <button type="button" class="btn btn-outline btn-block" id="toggle-manual-btn" onclick="loginToggleManual()">
+        Enter code manually
+      </button>
+      <div id="login-manual" style="display:none;margin-top:.75rem">
+        <input type="text" id="login-manual-input"
+               placeholder="e.g. ISA1-JAMJ"
+               autocomplete="off"
+               style="width:100%;box-sizing:border-box;margin-bottom:.5rem"
+               onkeydown="if(event.key==='Enter')loginSubmitManual()">
+        <button type="button" class="btn btn-primary btn-block" onclick="loginSubmitManual()">
+          Sign In
+        </button>
       </div>
     </div>
 
   </div>
 </div>
+
+<script>
+(function () {
+  var video   = document.getElementById('login-video');
+  var canvas  = document.getElementById('login-canvas');
+  var hidden  = document.getElementById('login-qr-hidden');
+  var form    = document.getElementById('login-form');
+  var scanLine = document.getElementById('login-scan-line');
+
+  startCamera(video, canvas, function (code) {
+    hidden.value = code;
+    beep();
+    setFeedback('login-feedback', '⏳', 'Signing in…', 'feedback-submitting');
+    stopCamera(video);
+    if (scanLine) scanLine.style.display = 'none';
+    setTimeout(function () { form.submit(); }, 400);
+  });
+
+  window.loginToggleManual = function () {
+    var panel = document.getElementById('login-manual');
+    var btn   = document.getElementById('toggle-manual-btn');
+    var show  = panel.style.display === 'none';
+    panel.style.display = show ? 'block' : 'none';
+    btn.textContent     = show ? 'Use camera instead' : 'Enter code manually';
+    if (show) document.getElementById('login-manual-input').focus();
+  };
+
+  window.loginSubmitManual = function () {
+    var val = document.getElementById('login-manual-input').value.trim();
+    if (!val) return;
+    hidden.value = val;
+    form.submit();
+  };
+})();
+</script>

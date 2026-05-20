@@ -3,7 +3,6 @@
 namespace App\Controllers;
 
 use App\Models\Employee;
-use App\Middleware\AuthMiddleware;
 use Core\Response;
 use Core\Session;
 
@@ -31,7 +30,7 @@ class AuthController extends BaseController
         $employee = (new Employee())->findByQr($qrCode);
 
         if (!$employee) {
-            Session::flash('error', "No employee found with QR code: <strong>{$this->e($qrCode)}</strong>. Try EMP-001 to EMP-008.");
+            Session::flash('error', "No employee found with QR code: <strong>{$this->e($qrCode)}</strong>.");
             Response::redirect('/login');
         }
 
