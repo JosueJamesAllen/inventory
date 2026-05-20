@@ -74,7 +74,7 @@ code {
 .auth-body {
   background:
     linear-gradient(135deg, rgba(15,76,129,0.78) 0%, rgba(26,58,92,0.82) 50%, rgba(13,148,136,0.75) 100%),
-    url('/inventory/public/img/PC-Loppy BG.png') center / cover no-repeat fixed;
+    url('/inventory/public/img/cc69be6f-bfd1-4687-9c70-771ce20b1576.jfif') center / cover no-repeat fixed;
 }
 .auth-wrap {
   min-height: 100vh;
@@ -1101,7 +1101,7 @@ small {
 [data-theme="dark"] .auth-body {
   background:
     linear-gradient(135deg, rgba(13,27,46,0.85) 0%, rgba(15,23,42,0.88) 50%, rgba(4,47,46,0.85) 100%),
-    url('/inventory/public/img/PC-Loppy BG.png') center / cover no-repeat fixed;
+    url('/inventory/public/img/cc69be6f-bfd1-4687-9c70-771ce20b1576.jfif') center / cover no-repeat fixed;
 }
 [data-theme="dark"] .auth-card {
   background: rgba(255, 255, 255, 0.07);
