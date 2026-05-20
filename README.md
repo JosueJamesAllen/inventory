@@ -17,6 +17,7 @@ A locally hosted web application for tracking the borrowing and return of IT equ
 - [Login](#login)
 - [Dark Mode](#dark-mode)
 - [Troubleshooting](#troubleshooting)
+- [Authors](#authors)
 
 ---
 
@@ -28,22 +29,26 @@ This system replaces manual logging with a fast, accurate QR-based process. Any 
 
 ## Features
 
-| Feature                       | Description                                                                                     |
-| ----------------------------- | ----------------------------------------------------------------------------------------------- |
-| **QR Code Login**             | Sign in by scanning your employee ID card or typing your QR code manually                      |
-| **Camera-Based QR Scanning**  | Built-in camera scanner on the Borrow / Return page — no USB scanner required                  |
-| **Real-Time Dashboard**       | Live view of all device statuses, active borrows, and today's transaction count                 |
-| **Borrow & Return**           | Two-scan process — employee ID then device QR                                                   |
-| **Proxy Return**              | Any staff member can return equipment on behalf of the original borrower                        |
-| **Designated Shelf Location** | Every device has a permanent cabinet and shelf — displayed automatically on return              |
-| **Manual Reconciliation**     | IT staff can override device status during physical inventory, with reason and timestamp logged |
-| **Equipment Audit Log**       | Full history per device — who borrowed it, who returned it, and when                            |
-| **Employee Audit Log**        | Full borrowing history per employee across all devices                                          |
-| **CSV Export**                | Export both audit logs to CSV for record-keeping and management review                          |
-| **Role-Based Access**         | Separate access levels for Admin, IT Staff, and Borrower                                        |
-| **QR Code Privacy**           | Employee QR codes are hidden from IT Staff view — visible to Admins only                       |
-| **Dark Mode**                 | Toggle between light and dark theme, preference saved across sessions                           |
-| **Locally Hosted**            | Runs entirely on your office network — no internet required                                     |
+| Feature                        | Description                                                                                      |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| **QR Code Login**              | Sign in by scanning your employee ID card or typing your QR code manually                       |
+| **Camera-Based QR Scanning**   | Built-in camera scanner on the Borrow / Return page — no USB scanner required                   |
+| **Real-Time Dashboard**        | Live view of all device statuses, active borrows, overdue items, and today's transaction count   |
+| **Dashboard Charts**           | Device status donut chart and 7-day transaction activity bar chart                               |
+| **Borrow & Return**            | Three-step process — scan employee ID, scan device, then fill in borrow details                  |
+| **Borrow Details**             | Purpose of borrowing and expected return date captured per transaction; indefinite borrows supported |
+| **Overdue Flagging**           | Devices past their expected return date are highlighted in the dashboard and active borrows table |
+| **Proxy Return**               | Any staff member can return equipment on behalf of the original borrower                         |
+| **Designated Shelf Location**  | Every device has a permanent cabinet and shelf — displayed automatically on return               |
+| **Manual Reconciliation**      | IT staff can override device status during physical inventory, with reason and timestamp logged  |
+| **Equipment Audit Log**        | Full history per device — who borrowed it, for what purpose, who returned it, and when          |
+| **Employee Audit Log**         | Full borrowing history per employee across all devices                                           |
+| **CSV Export**                 | Export both audit logs to CSV for record-keeping and management review                           |
+| **QR Code Printing**           | Print a compact sticker sheet of device QR codes directly from the Devices page                 |
+| **Role-Based Access**          | Separate access levels for Admin, IT Staff, and Borrower                                         |
+| **QR Code Privacy**            | Employee QR codes are hidden from IT Staff view — visible to Admins only                        |
+| **Dark Mode**                  | Toggle between light and dark theme, preference saved across sessions                            |
+| **Locally Hosted**             | Runs entirely on your office network — no internet required                                      |
 
 ---
 
@@ -213,11 +218,11 @@ inventory/
 
 ## User Roles
 
-| Role         | Access                                                                                      |
-| ------------ | ------------------------------------------------------------------------------------------- |
-| **Admin**    | Full access — manages devices and employees, views all reports, exports data, sees QR codes |
+| Role         | Access                                                                                        |
+| ------------ | --------------------------------------------------------------------------------------------- |
+| **Admin**    | Full access — manages devices and employees, views all reports, exports data, sees QR codes   |
 | **IT Staff** | Facilitates borrow/return transactions, manages devices, views employee list (QR codes hidden) |
-| **Borrower** | Can scan their own ID to borrow or return equipment independently                           |
+| **Borrower** | Can scan their own ID to borrow or return equipment independently                             |
 
 ---
 
@@ -228,7 +233,8 @@ inventory/
 1. Go to **Borrow / Return** and select **Borrow**
 2. The camera opens — hold up the **employee ID card** QR code
 3. Once detected, hold up the **device sticker** QR code
-4. System confirms — device is marked as **Borrowed**
+4. Fill in the **purpose of borrowing** and **expected return date** (or mark as indefinite)
+5. Press **Confirm Borrow** — device is marked as **Borrowed**
 
 ### Returning a Device
 
@@ -238,6 +244,10 @@ inventory/
 4. System confirms return and displays the device's **designated shelf location**
 
 If the person returning is different from the original borrower, the system records both — this is a **proxy return** and is fully logged in the audit trail.
+
+### Overdue Devices
+
+Any device with an expected return date that has passed is automatically flagged. The dashboard shows an **Overdue** count, and affected rows are highlighted in the active borrows table. Devices marked as indefinite are never flagged.
 
 ### Manual Reconciliation
 
@@ -281,6 +291,12 @@ The browser requires HTTPS or `localhost` to allow camera access. Accessing the 
 **Accessing from other devices on the network**
 Camera access over a local IP requires HTTPS. The simplest option is to access the app only from the host machine (`localhost`), or set up a self-signed SSL certificate in XAMPP if network-wide access is needed.
 
+**White screen after submitting a form**
+Enable debug mode temporarily: open `config/app.php` and set `'debug' => true`. Reload the page to see the full error. Remember to set it back to `false` when done.
+
+**OPcache serving stale pages after code changes**
+Restart Apache from the XAMPP Control Panel to flush the bytecode cache. A hard browser refresh (Ctrl + Shift + R) alone is not enough when PHP files have changed.
+
 **Dark mode doesn't persist**
 Make sure the browser allows `localStorage`. Incognito/private mode may block it.
 
@@ -288,7 +304,7 @@ Make sure the browser allows `localStorage`. Incognito/private mode may block it
 Hard refresh with **Ctrl + Shift + R** to bypass the browser cache.
 
 **Employee still shows active borrows after all devices returned**
-This can happen if a device was manually set to Available before the transaction-close fix was in place. The active borrow count now cross-checks against the device's actual status, so it corrects itself automatically on next page load.
+This can happen if a device was manually set to Available before its transaction was closed. The active borrow count cross-checks against the device's actual status and corrects itself automatically on next page load.
 
 ---
 
@@ -296,3 +312,5 @@ This can happen if a device was manually set to Available before the transaction
 
 Prepared by **James Allen M. Josue** and **Frenz Darren J. Medallon**
 Statistical Unit · May 2026
+
+<!-- ↑↑↓↓←→←→ -->
