@@ -41,7 +41,7 @@
         <th>Location</th>
         <th>Status</th>
         <th>Current Borrower</th>
-        <?php if ($canEdit): ?><th>Actions</th><?php endif; ?>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -65,14 +65,16 @@
             ? htmlspecialchars($d['current_borrower'])
             : '<span class="text-muted">—</span>' ?>
       </td>
-      <?php if ($canEdit): ?>
       <td class="actions-cell">
+        <button class="btn btn-xs btn-outline"
+          onclick='openDeviceHistory(<?= (int)$d["id"] ?>)'>History</button>
+        <?php if ($canEdit): ?>
         <button class="btn btn-xs btn-outline"
           onclick='openEditDevice(<?= json_encode($d) ?>)'>Edit</button>
         <button class="btn btn-xs btn-warn"
           onclick='openReconcile(<?= (int)$d["id"] ?>, <?= json_encode($d["name"]) ?>, <?= json_encode($d["status"]) ?>)'>Reconcile</button>
+        <?php endif; ?>
       </td>
-      <?php endif; ?>
     </tr>
     <?php endforeach; ?>
     </tbody>
@@ -217,3 +219,97 @@
 </div>
 
 <?php endif; ?>
+
+<!-- ── Modal: Device History ── -->
+<div id="modal-device-history" class="modal-overlay" style="display:none">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div>
+        <h3 id="history-device-name">Device History</h3>
+        <p id="history-device-meta" class="modal-desc" style="margin:0"></p>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-device-history')">✕</button>
+    </div>
+    <div id="history-body" class="history-timeline">
+      <div class="history-loading">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openDeviceHistory(id) {
+  document.getElementById('history-device-name').textContent = 'Device History';
+  document.getElementById('history-device-meta').textContent = '';
+  document.getElementById('history-body').innerHTML = '<div class="history-loading">Loading…</div>';
+  openModal('modal-device-history');
+
+  fetch('/inventory/public/devices/history?id=' + id)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        document.getElementById('history-body').innerHTML = '<p class="text-muted" style="padding:1rem">Error loading history.</p>';
+        return;
+      }
+
+      const d = data.device;
+      document.getElementById('history-device-name').textContent = d.name;
+      document.getElementById('history-device-meta').textContent = d.type + ' · ' + d.asset_tag;
+
+      const rows = data.history;
+      if (!rows.length) {
+        document.getElementById('history-body').innerHTML =
+          '<p class="text-muted" style="padding:1rem;text-align:center">No transactions recorded for this device yet.</p>';
+        return;
+      }
+
+      const html = rows.map(r => {
+        const active  = !r.returned_at;
+        const badge   = active
+          ? '<span class="status-badge status-borrowed">Active</span>'
+          : '<span class="status-badge status-available">Returned</span>';
+        const borrowed = formatDate(r.borrowed_at);
+        const returned = r.returned_at ? formatDate(r.returned_at) : '—';
+        const via      = r.facilitated_by_name ? 'via ' + escHtml(r.facilitated_by_name) : 'Self-serve';
+        const retBy    = r.returned_by_name ? 'Returned by ' + escHtml(r.returned_by_name) : (r.returned_at ? 'Self-serve' : '');
+
+        return `
+          <div class="history-entry ${active ? 'history-active' : ''}">
+            <div class="history-dot ${active ? 'history-dot-active' : ''}"></div>
+            <div class="history-content">
+              <div class="history-row-top">
+                <strong>${escHtml(r.borrower_name)}</strong>
+                <span class="text-muted" style="font-size:.78rem">${escHtml(r.department)}</span>
+                ${badge}
+              </div>
+              <div class="history-row-dates">
+                <span>Borrowed: <b>${borrowed}</b></span>
+                <span>Returned: <b>${returned}</b></span>
+              </div>
+              <div class="history-row-meta">
+                <span class="text-muted">${via}</span>
+                ${retBy ? '<span class="text-muted">' + retBy + '</span>' : ''}
+                ${r.notes ? '<span class="text-muted">Note: ' + escHtml(r.notes) + '</span>' : ''}
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+      document.getElementById('history-body').innerHTML = html;
+    })
+    .catch(() => {
+      document.getElementById('history-body').innerHTML =
+        '<p class="text-muted" style="padding:1rem">Failed to load history.</p>';
+    });
+}
+
+function formatDate(str) {
+  if (!str) return '—';
+  const d = new Date(str.replace(' ', 'T'));
+  return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
+       + ' ' + d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>

@@ -96,6 +96,22 @@ class Transaction extends BaseModel
         );
     }
 
+    public function historyByDevice(int $deviceId): array
+    {
+        return $this->query("
+            SELECT t.id, t.borrowed_at, t.returned_at, t.notes,
+                   e1.name AS borrower_name, e1.department,
+                   e2.name AS facilitated_by_name,
+                   e3.name AS returned_by_name
+            FROM transactions t
+            JOIN employees e1 ON t.borrower_id    = e1.id
+            LEFT JOIN employees e2 ON t.facilitated_by = e2.id
+            LEFT JOIN employees e3 ON t.returned_by    = e3.id
+            WHERE t.device_id = ?
+            ORDER BY t.id DESC
+        ", [$deviceId]);
+    }
+
     // CSV export rows
     public function equipmentCsvRows(): array { return $this->equipmentAudit(9999); }
     public function employeeCsvRows(): array  { return $this->employeeAudit(9999); }

@@ -643,6 +643,65 @@ tr:hover td {
   border: 1px solid var(--border);
 }
 
+/* ── Device history timeline ── */
+.history-timeline {
+  padding: 0.5rem 0;
+}
+.history-loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text2);
+  font-size: 0.9rem;
+}
+.history-entry {
+  display: flex;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--glass-border);
+  position: relative;
+}
+.history-entry:last-child {
+  border-bottom: none;
+}
+.history-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text2);
+  margin-top: 0.35rem;
+  border: 2px solid var(--surface2);
+}
+.history-dot-active {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.2);
+}
+.history-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.history-row-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.history-row-dates {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.82rem;
+  color: var(--text2);
+  flex-wrap: wrap;
+}
+.history-row-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.78rem;
+  flex-wrap: wrap;
+}
+
 .chip {
   display: inline-flex;
   align-items: center;
@@ -952,6 +1011,9 @@ small {
   box-shadow: 0 24px 64px rgba(15, 76, 129, 0.18);
   max-height: 90vh;
   overflow-y: auto;
+}
+.modal-lg {
+  max-width: 680px;
 }
 .modal-header {
   display: flex;

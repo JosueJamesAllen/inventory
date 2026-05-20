@@ -73,6 +73,30 @@ class DeviceController extends BaseController
         Response::redirect('/devices');
     }
 
+    public function history(): void
+    {
+        AuthMiddleware::handle();
+
+        $id      = (int)($_GET['id'] ?? 0);
+        $device  = (new Device())->findById($id);
+
+        if (!$device) {
+            Response::json(['error' => 'Device not found'], 404);
+        }
+
+        $rows = (new Transaction())->historyByDevice($id);
+
+        Response::json([
+            'device' => [
+                'name'       => $device['name'],
+                'asset_tag'  => $device['asset_tag'],
+                'type'       => $device['type'],
+                'status'     => $device['status'],
+            ],
+            'history' => $rows,
+        ]);
+    }
+
     public function reconcile(): void
     {
         RoleMiddleware::require('admin', 'it_staff');

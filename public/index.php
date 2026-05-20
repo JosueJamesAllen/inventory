@@ -65,6 +65,7 @@ $router->post('/scan/return',  'ScanController@return');
 
 // Devices
 $router->get( '/devices',            'DeviceController@index');
+$router->get( '/devices/history',    'DeviceController@history');
 $router->post('/devices',            'DeviceController@store');
 $router->post('/devices/update',     'DeviceController@update');
 $router->post('/devices/reconcile',  'DeviceController@reconcile');
