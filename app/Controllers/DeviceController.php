@@ -54,12 +54,18 @@ class DeviceController extends BaseController
 
         $id = (int)$this->request->post('device_id');
 
+        $newStatus = $this->request->post('status');
+
+        if ($newStatus === 'available') {
+            (new Transaction())->closeByDevice($id, 'Status set to available via device edit.');
+        }
+
         (new Device())->update($id, [
             'name'    => $this->request->post('name'),
             'type'    => $this->request->post('type'),
             'cabinet' => $this->request->post('cabinet'),
             'shelf'   => $this->request->post('shelf'),
-            'status'  => $this->request->post('status'),
+            'status'  => $newStatus,
             'notes'   => $this->request->post('notes'),
         ]);
 

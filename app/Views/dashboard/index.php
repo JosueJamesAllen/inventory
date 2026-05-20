@@ -37,7 +37,7 @@
 
 <!-- Active Borrows -->
 <div class="section-head">
-  <h2>Active Borrows <span class="badge badge-amber"><?= count($activeBorrows) ?></span></h2>
+  <h2>Active Borrows <span class="badge badge-amber"><?= $borrowed ?></span></h2>
 </div>
 
 <?php if (empty($activeBorrows)): ?>
@@ -67,15 +67,19 @@
         <br><span class="text-muted"><?= htmlspecialchars($b['asset_tag']) ?></span>
       </td>
       <td><span class="chip"><?= htmlspecialchars($b['device_type']) ?></span></td>
-      <td><?= htmlspecialchars($b['borrower_name']) ?></td>
-      <td><?= htmlspecialchars($b['department']) ?></td>
-      <td><?= date('M d, H:i', strtotime($b['borrowed_at'])) ?></td>
+      <td><?= $b['borrower_name'] ? htmlspecialchars($b['borrower_name']) : '<span class="text-muted">—</span>' ?></td>
+      <td><?= $b['department'] ? htmlspecialchars($b['department']) : '<span class="text-muted">—</span>' ?></td>
+      <td><?= $b['borrowed_at'] ? date('M d, H:i', strtotime($b['borrowed_at'])) : '<span class="text-muted">Manual</span>' ?></td>
       <td>
+        <?php if ($b['hours_ago'] !== null): ?>
         <span class="duration <?= $b['hours_ago'] >= 8 ? 'duration-warn' : '' ?>">
           <?= $b['hours_ago'] ?>h
         </span>
+        <?php else: ?>
+        <span class="text-muted">—</span>
+        <?php endif; ?>
       </td>
-      <td><?= $b['facilitated_by_name'] ? htmlspecialchars($b['facilitated_by_name']) : '<span class="text-muted">Self</span>' ?></td>
+      <td><?= $b['facilitated_by_name'] ? htmlspecialchars($b['facilitated_by_name']) : '<span class="text-muted">—</span>' ?></td>
     </tr>
     <?php endforeach; ?>
     </tbody>

@@ -161,7 +161,6 @@
           <label>Status *</label>
           <select name="status" id="edit-device-status">
             <option value="available">Available</option>
-            <option value="borrowed">Borrowed</option>
             <option value="out_of_service">Out of Service</option>
           </select>
         </div>

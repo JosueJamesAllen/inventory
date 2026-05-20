@@ -10,10 +10,11 @@ class Employee extends BaseModel
     {
         return $this->query("
             SELECT e.*,
-                   COUNT(t.id)                                          AS total_borrows,
-                   SUM(CASE WHEN t.returned_at IS NULL THEN 1 ELSE 0 END) AS active_borrows
+                   COUNT(t.id) AS total_borrows,
+                   SUM(CASE WHEN t.returned_at IS NULL AND d.status = 'borrowed' THEN 1 ELSE 0 END) AS active_borrows
             FROM employees e
             LEFT JOIN transactions t ON e.id = t.borrower_id
+            LEFT JOIN devices      d ON t.device_id = d.id
             GROUP BY e.id
             ORDER BY e.name
         ");

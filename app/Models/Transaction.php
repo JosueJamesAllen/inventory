@@ -33,18 +33,20 @@ class Transaction extends BaseModel
     public function activeBorrows(): array
     {
         return $this->query("
-            SELECT t.*,
-                   d.name AS device_name, d.asset_tag, d.type AS device_type,
+            SELECT d.name AS device_name, d.asset_tag, d.type AS device_type,
                    d.cabinet, d.shelf,
+                   t.id, t.borrowed_at, t.facilitated_by,
                    e1.name AS borrower_name, e1.department,
                    e2.name AS facilitated_by_name,
-                   ROUND(TIMESTAMPDIFF(MINUTE, t.borrowed_at, NOW()) / 60, 1) AS hours_ago
-            FROM transactions t
-            JOIN devices   d  ON t.device_id      = d.id
-            JOIN employees e1 ON t.borrower_id    = e1.id
-            LEFT JOIN employees e2 ON t.facilitated_by = e2.id
-            WHERE t.returned_at IS NULL
-            ORDER BY t.borrowed_at DESC
+                   CASE WHEN t.borrowed_at IS NOT NULL
+                        THEN ROUND(TIMESTAMPDIFF(MINUTE, t.borrowed_at, NOW()) / 60, 1)
+                        ELSE NULL END AS hours_ago
+            FROM devices d
+            LEFT JOIN transactions t  ON t.device_id = d.id AND t.returned_at IS NULL
+            LEFT JOIN employees    e1 ON t.borrower_id     = e1.id
+            LEFT JOIN employees    e2 ON t.facilitated_by  = e2.id
+            WHERE d.status = 'borrowed'
+            ORDER BY t.borrowed_at IS NULL, t.borrowed_at DESC
         ");
     }
 
