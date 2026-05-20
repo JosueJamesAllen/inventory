@@ -14,16 +14,15 @@ A locally hosted web application for tracking the borrowing and return of IT equ
 - [Project Structure](#project-structure)
 - [User Roles](#user-roles)
 - [How It Works](#how-it-works)
-- [QR Scanner Setup](#qr-scanner-setup)
+- [Login](#login)
 - [Dark Mode](#dark-mode)
-- [Demo Accounts](#demo-accounts)
 - [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Overview
 
-This system replaces manual logging with a fast, accurate QR-based process. Any staff member who needs to borrow a laptop, monitor, or other IT device can do so in seconds by scanning two QR codes — their employee ID and the device sticker. IT staff always have a real-time view of every device's status and location.
+This system replaces manual logging with a fast, accurate QR-based process. Any staff member who needs to borrow a laptop, tablet, or other IT device can do so in seconds by scanning two QR codes — their employee ID and the device sticker. IT staff always have a real-time view of every device's status and location.
 
 ---
 
@@ -31,7 +30,8 @@ This system replaces manual logging with a fast, accurate QR-based process. Any 
 
 | Feature                       | Description                                                                                     |
 | ----------------------------- | ----------------------------------------------------------------------------------------------- |
-| **QR Code Scanning**          | Works with USB plug-in scanners or existing QR codes on employee IDs and equipment              |
+| **QR Code Login**             | Sign in by scanning your employee ID card or typing your QR code manually                      |
+| **Camera-Based QR Scanning**  | Built-in camera scanner on the Borrow / Return page — no USB scanner required                  |
 | **Real-Time Dashboard**       | Live view of all device statuses, active borrows, and today's transaction count                 |
 | **Borrow & Return**           | Two-scan process — employee ID then device QR                                                   |
 | **Proxy Return**              | Any staff member can return equipment on behalf of the original borrower                        |
@@ -41,6 +41,7 @@ This system replaces manual logging with a fast, accurate QR-based process. Any 
 | **Employee Audit Log**        | Full borrowing history per employee across all devices                                          |
 | **CSV Export**                | Export both audit logs to CSV for record-keeping and management review                          |
 | **Role-Based Access**         | Separate access levels for Admin, IT Staff, and Borrower                                        |
+| **QR Code Privacy**           | Employee QR codes are hidden from IT Staff view — visible to Admins only                       |
 | **Dark Mode**                 | Toggle between light and dark theme, preference saved across sessions                           |
 | **Locally Hosted**            | Runs entirely on your office network — no internet required                                     |
 
@@ -50,7 +51,7 @@ This system replaces manual logging with a fast, accurate QR-based process. Any 
 
 - [XAMPP](https://www.apachefriends.org/) (Apache + MySQL + PHP 8.0+)
 - A modern browser (Chrome, Firefox, Edge)
-- A USB QR code scanner (optional — dropdowns available for demo/testing)
+- Camera access (for QR scanning on the Borrow / Return and Login pages)
 
 ---
 
@@ -119,7 +120,7 @@ Click **New** in the left sidebar, name it `inventory_db`, set collation to `utf
 - Click **Choose File** and select `storage/inventory.sql`
 - Click **Go**
 
-This creates all tables and loads 8 employees, 18 devices, and sample transaction history.
+This creates all tables and loads the employee registry, device inventory, and any initial data included in the SQL file.
 
 **4. Verify the database config**
 
@@ -133,6 +134,17 @@ return [
     'password' => '',        // XAMPP default is no password
 ];
 ```
+
+**5. Clear audit data before going live (optional)**
+
+If the SQL file contains demo transaction or reconciliation records, clear them in phpMyAdmin before first use:
+
+```sql
+TRUNCATE TABLE reconciliations;
+TRUNCATE TABLE transactions;
+```
+
+`reconciliations` must go first. This resets the audit log, active borrow counts, and dashboard figures to zero without touching employee or device records.
 
 ---
 
@@ -188,12 +200,11 @@ inventory/
 │   └── Session.php
 │
 ├── config/
-│   ├── app.php              ← App name, timezone, debug mode
+│   ├── app.php              ← App name, timezone, env, debug mode
 │   └── database.php         ← DB credentials
 │
 └── storage/
-    ├── inventory.sql        ← Schema + seed data (import once)
-    └── exports/             ← Temporary CSV files before download
+    └── inventory.sql        ← Schema + seed data (import once)
 ```
 
 > **Important:** Only the `public/` folder is served by Apache. All other folders — `app/`, `core/`, `config/`, `storage/` — are never directly accessible from the browser.
@@ -202,11 +213,11 @@ inventory/
 
 ## User Roles
 
-| Role         | Access                                                                    |
-| ------------ | ------------------------------------------------------------------------- |
-| **Admin**    | Full access — manages devices, employees, views all reports, exports data |
-| **IT Staff** | Can facilitate borrow/return transactions, manage devices, view employees |
-| **Borrower** | Can scan their own ID to borrow or return equipment independently         |
+| Role         | Access                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------- |
+| **Admin**    | Full access — manages devices and employees, views all reports, exports data, sees QR codes |
+| **IT Staff** | Facilitates borrow/return transactions, manages devices, views employee list (QR codes hidden) |
+| **Borrower** | Can scan their own ID to borrow or return equipment independently                           |
 
 ---
 
@@ -214,76 +225,49 @@ inventory/
 
 ### Borrowing a Device
 
-1. Staff member scans their **employee ID card** QR code
-2. Staff member scans the **device sticker** QR code
-3. System confirms — device is marked as **Borrowed**
+1. Go to **Borrow / Return** and select **Borrow**
+2. The camera opens — hold up the **employee ID card** QR code
+3. Once detected, hold up the **device sticker** QR code
+4. System confirms — device is marked as **Borrowed**
 
 ### Returning a Device
 
-1. Scan the **employee ID** (original borrower or any staff member)
-2. Scan the **device** QR code
-3. System confirms return and displays the device's **designated shelf location**
+1. Go to **Borrow / Return** and select **Return**
+2. Scan the **employee ID** (original borrower or any staff member)
+3. Scan the **device** QR code
+4. System confirms return and displays the device's **designated shelf location**
 
 If the person returning is different from the original borrower, the system records both — this is a **proxy return** and is fully logged in the audit trail.
 
 ### Manual Reconciliation
 
-IT staff can override a device's status at any time during a physical inventory check. Every override requires a written reason and is permanently logged with the staff member's name and timestamp.
+IT staff can override a device's status at any time during a physical inventory check. Every override requires a written reason and is permanently logged with the staff member's name and timestamp. Use the **Reconcile** button on the Devices page.
+
+> **Note:** To mark a device as Borrowed, always use the Borrow / Return scan page. The Edit device form only allows switching between **Available** and **Out of Service** — this keeps transaction records accurate.
 
 ---
 
-## QR Scanner Setup
+## Login
 
-### USB Plug-in Scanner (Recommended)
+Staff sign in using their **employee QR code** (e.g. `ISA1-JAMJ`). There are two ways to sign in:
 
-A USB QR scanner works like a keyboard — no drivers or extra code needed. Just plug it in.
+- **Camera scan** — the login page opens the camera automatically; hold up your employee ID card
+- **Manual entry** — click **Enter code manually** and type your QR code, then press Enter
 
-1. Click into the **Employee QR** field on the Scan page
-2. Scan the employee ID card — the code fills in and focus jumps automatically
-3. Scan the device sticker — the form submits automatically
-
-**Scanner settings to verify** (usually configured via the scanner's setup sheet):
-
-- Suffix: **Enter** (auto-advances after each scan)
-- Mode: **USB HID Keyboard**
-
-### Camera-Based Scanning (Optional)
-
-For camera-based scanning without a physical scanner, the [jsQR](https://github.com/cozmo/jsQR) library can be integrated. This reads the camera feed in real time and fills the form fields when a QR code is detected. See the code comments in `public/js/app.js` for the integration point.
+There are no shared passwords. Each employee's QR code is their credential. Admins manage employee records (including QR codes) from the Employees tab.
 
 ---
 
 ## Dark Mode
 
-Click the **moon icon** (🌙) in the top-right corner of the sidebar to toggle dark mode. Your preference is saved automatically and persists across all pages and sessions.
-
-Works in Chrome, Firefox, and Edge. Firefox users on strict privacy mode are supported via a `localStorage` fallback.
-
----
-
-## Demo Accounts
-
-These accounts are created by the seed data in `inventory.sql`:
-
-| QR Code   | Name                  | Role     |
-| --------- | --------------------- | -------- |
-| `EMP-001` | James Allen Josue     | Admin    |
-| `EMP-002` | Frenz Darren Medallon | IT Staff |
-| `EMP-003` | Maria Santos          | Borrower |
-| `EMP-004` | Carlos Reyes          | Borrower |
-| `EMP-005` | Ana Lim               | Borrower |
-| `EMP-006` | Rico Dela Cruz        | Borrower |
-| `EMP-007` | Patricia Gomez        | Borrower |
-| `EMP-008` | Ben Aquino            | IT Staff |
-
-On the login page, enter any QR code above or use the quick login buttons.
+Click the **moon icon** (🌙) in the sidebar to toggle dark mode. Your preference is saved automatically and persists across all pages and sessions.
 
 ---
 
 ## Troubleshooting
 
-**Page shows a giant purple shape, no styles**
-The CSS path is not resolving. Open `app/Views/layouts/app.php` and `app/Views/layouts/auth.php` and make sure the stylesheet `href` uses `$_SERVER['HTTP_HOST']` to build the full URL dynamically.
+**Page shows no styles**
+The CSS path is not resolving. Confirm the `inventory` folder is placed directly inside `C:/xampp/htdocs/` and that XAMPP is running.
 
 **404 on all pages except the homepage**
 mod_rewrite is not enabled. See step 2 of [Installation](#installation).
@@ -291,18 +275,24 @@ mod_rewrite is not enabled. See step 2 of [Installation](#installation).
 **Database connection failed**
 Make sure MySQL is running in the XAMPP Control Panel and that `inventory_db` exists in phpMyAdmin. Check credentials in `config/database.php`.
 
-**Dark mode doesn't work in Firefox**
-Make sure the `localStorage` calls in `public/js/app.js` and the inline `<script>` in the layout are wrapped in `try/catch` blocks.
+**Camera does not open on the login or scan page**
+The browser requires HTTPS or `localhost` to allow camera access. Accessing the app via an IP address (e.g. `192.168.x.x`) on another device will block the camera — see the note below.
 
-**`Declaration of ... must be compatible` error**
-Rename the `count()` method in `app/Models/Employee.php` to `total()` and update the call in `DashboardController.php` to match.
+**Accessing from other devices on the network**
+Camera access over a local IP requires HTTPS. The simplest option is to access the app only from the host machine (`localhost`), or set up a self-signed SSL certificate in XAMPP if network-wide access is needed.
+
+**Dark mode doesn't persist**
+Make sure the browser allows `localStorage`. Incognito/private mode may block it.
 
 **CSS or JS not updating after changes**
 Hard refresh with **Ctrl + Shift + R** to bypass the browser cache.
+
+**Employee still shows active borrows after all devices returned**
+This can happen if a device was manually set to Available before the transaction-close fix was in place. The active borrow count now cross-checks against the device's actual status, so it corrects itself automatically on next page load.
 
 ---
 
 ## Authors
 
 Prepared by **James Allen M. Josue** and **Frenz Darren J. Medallon**
-Statistical Unit · March 2026
+Statistical Unit · May 2026
