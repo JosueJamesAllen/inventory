@@ -414,7 +414,7 @@ code {
 /* ── Stats grid ── */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 220px));
+  grid-template-columns: repeat(7, 1fr);
   justify-content: center;
   gap: 1rem;
   margin-bottom: 2rem;
