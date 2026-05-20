@@ -872,7 +872,7 @@ tr.row-overdue td:first-child {
 /* ── Dashboard charts ── */
 .charts-grid {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: minmax(240px, 300px) 1fr;
   gap: 1rem;
   margin: 2rem 0;
 }
@@ -896,10 +896,6 @@ tr.row-overdue td:first-child {
   position: relative;
   height: 230px;
 }
-@media (max-width: 680px) {
-  .charts-grid { grid-template-columns: 1fr; }
-}
-
 /* ── Forms ── */
 .form-group {
   margin-bottom: 0.875rem;
@@ -1257,9 +1253,17 @@ small {
 }
 
 /* ── Responsive ── */
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 @media (max-width: 900px) {
   .stats-grid {
-    grid-template-columns: repeat(3, minmax(140px, 220px));
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .charts-grid {
+    grid-template-columns: 1fr;
   }
   .scan-grid {
     grid-template-columns: 1fr;
