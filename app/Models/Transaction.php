@@ -112,6 +112,17 @@ class Transaction extends BaseModel
         ", [$deviceId]);
     }
 
+    public function weeklyActivity(): array
+    {
+        return $this->query("
+            SELECT DATE(borrowed_at) AS day, COUNT(*) AS count
+            FROM transactions
+            WHERE borrowed_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+            GROUP BY DATE(borrowed_at)
+            ORDER BY day
+        ");
+    }
+
     // CSV export rows
     public function equipmentCsvRows(): array { return $this->equipmentAudit(9999); }
     public function employeeCsvRows(): array  { return $this->employeeAudit(9999); }

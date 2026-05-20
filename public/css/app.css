@@ -855,6 +855,37 @@ tr:hover td {
   color: var(--amber);
 }
 
+/* ── Dashboard charts ── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+.chart-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur));
+  border-radius: var(--radius);
+  padding: 1.5rem 1.75rem 1.75rem;
+}
+.chart-card-title {
+  font-family: "Montserrat", system-ui, sans-serif;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 1.25rem;
+}
+.chart-wrap {
+  position: relative;
+  height: 230px;
+}
+@media (max-width: 680px) {
+  .charts-grid { grid-template-columns: 1fr; }
+}
+
 /* ── Forms ── */
 .form-group {
   margin-bottom: 0.875rem;

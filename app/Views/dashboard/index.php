@@ -35,6 +35,22 @@
   <?php endforeach; ?>
 </div>
 
+<!-- Charts -->
+<div class="charts-grid">
+  <div class="chart-card">
+    <div class="chart-card-title">Device Status</div>
+    <div class="chart-wrap">
+      <canvas id="chart-status"></canvas>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-card-title">Daily Activity · Last 7 Days</div>
+    <div class="chart-wrap">
+      <canvas id="chart-activity"></canvas>
+    </div>
+  </div>
+</div>
+
 <!-- Active Borrows -->
 <div class="section-head">
   <h2>Active Borrows <span class="badge badge-amber"><?= $borrowed ?></span></h2>
@@ -86,3 +102,76 @@
   </table>
 </div>
 <?php endif; ?>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const isDark    = document.documentElement.getAttribute('data-theme') === 'dark';
+  const textColor = isDark ? 'rgba(148,163,184,0.85)' : 'rgba(100,116,139,0.9)';
+  const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
+
+  new Chart(document.getElementById('chart-status'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Available', 'Borrowed', 'Out of Service'],
+      datasets: [{
+        data: [<?= $available ?>, <?= $borrowed ?>, <?= $oos ?>],
+        backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
+        borderColor: isDark ? '#1e293b' : '#ffffff',
+        borderWidth: 3,
+        hoverOffset: 6,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: textColor, padding: 14, boxWidth: 12, font: { size: 12 } },
+        },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` } },
+      },
+    },
+  });
+
+  <?php
+  $weekMap = [];
+  for ($i = 6; $i >= 0; $i--) {
+      $weekMap[date('Y-m-d', strtotime("-$i days"))] = 0;
+  }
+  foreach ($weeklyActivity as $row) {
+      if (isset($weekMap[$row['day']])) $weekMap[$row['day']] = (int)$row['count'];
+  }
+  $chartLabels = json_encode(array_map(fn($d) => date('D, M j', strtotime($d)), array_keys($weekMap)));
+  $chartCounts = json_encode(array_values($weekMap));
+  ?>
+
+  new Chart(document.getElementById('chart-activity'), {
+    type: 'bar',
+    data: {
+      labels: <?= $chartLabels ?>,
+      datasets: [{
+        label: 'Transactions',
+        data: <?= $chartCounts ?>,
+        backgroundColor: 'rgba(56,189,248,0.65)',
+        borderColor: '#38bdf8',
+        borderWidth: 1.5,
+        borderRadius: 5,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { color: textColor } },
+        y: {
+          beginAtZero: true,
+          grid: { color: gridColor },
+          ticks: { color: textColor, precision: 0 },
+        },
+      },
+    },
+  });
+})();
+</script>
