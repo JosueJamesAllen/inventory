@@ -3,7 +3,11 @@
     "allow": [
       "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root -e \"SHOW DATABASES;\" 2>$null)",
       "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root -e \"DESCRIBE inventory_db.transactions;\")",
-      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root inventory_db -e \"ALTER TABLE transactions ADD COLUMN purpose VARCHAR\\(255\\) NULL AFTER borrowed_at, ADD COLUMN expected_return_at DATE NULL AFTER purpose;\")"
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root inventory_db -e \"ALTER TABLE transactions ADD COLUMN purpose VARCHAR\\(255\\) NULL AFTER borrowed_at, ADD COLUMN expected_return_at DATE NULL AFTER purpose;\")",
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root inventory_db -e \"SELECT purpose, expected_return_at FROM transactions LIMIT 1;\")",
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root -e \"SELECT TABLE_SCHEMA, TABLE_NAME FROM information_schema.TABLES WHERE TABLE_NAME = 'transactions';\")",
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root -h 127.0.0.1 -P 3306 inventory_db -e \"SELECT d.name, t.purpose, t.expected_return_at FROM devices d LEFT JOIN transactions t ON t.device_id = d.id AND t.returned_at IS NULL WHERE d.status = 'borrowed' LIMIT 1;\")",
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root inventory_db -e \"SHOW COLUMNS FROM transactions LIKE 'purpose'; SHOW COLUMNS FROM transactions LIKE 'expected_return_at';\")"
     ]
   }
 }
