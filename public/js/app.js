@@ -372,14 +372,14 @@ function openQrPrintWindow(items, title) {
     .toolbar button { padding: .45rem 1rem; border-radius: 7px; border: 1px solid #cbd5e1;
                       font-size: .85rem; cursor: pointer; font-weight: 600; }
     .toolbar .btn-print { background: #0f4c81; color: #fff; border-color: #0f4c81; }
-    .qr-grid { display: grid; grid-template-columns: repeat(4, 1fr);
-               gap: 1rem; padding: 1.25rem; }
-    .qr-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: .875rem .75rem;
+    .qr-grid { display: grid; grid-template-columns: repeat(6, 1fr);
+               gap: .35rem; padding: .5rem; }
+    .qr-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: .3rem .25rem;
                text-align: center; break-inside: avoid; }
-    .qr-wrap { display: flex; justify-content: center; margin-bottom: .5rem; }
+    .qr-wrap { display: flex; justify-content: center; margin-bottom: .2rem; }
     .qr-wrap canvas, .qr-wrap img { max-width: 100%; height: auto; }
-    .qr-name { font-size: .78rem; font-weight: 700; line-height: 1.3; }
-    .qr-sub  { font-size: .7rem; color: #64748b; margin-top: .15rem; }
+    .qr-name { font-size: .65rem; font-weight: 700; line-height: 1.2; }
+    .qr-sub  { font-size: .58rem; color: #64748b; margin-top: .1rem; }
     @media print {
       .toolbar { display: none; }
       .qr-grid { gap: .6rem; padding: .5rem; }
@@ -398,7 +398,7 @@ function openQrPrintWindow(items, title) {
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>
   <script>
     document.querySelectorAll('.qr-wrap[data-qr]').forEach(function(el) {
-      new QRCode(el, { text: el.dataset.qr, width: 120, height: 120,
+      new QRCode(el, { text: el.dataset.qr, width: 80, height: 80,
                        correctLevel: QRCode.CorrectLevel.M });
     });
   <\/script>
