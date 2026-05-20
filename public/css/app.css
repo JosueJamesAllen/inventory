@@ -44,7 +44,7 @@
   padding: 0;
 }
 body {
-  font-family: "DM Sans", system-ui, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
   background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 50%, #ccfbf1 100%);
   background-attachment: fixed;
   color: var(--text);
@@ -56,12 +56,30 @@ a {
   color: inherit;
   text-decoration: none;
 }
+h1, h2, h3, h4, h5, h6,
+.nav-item,
+.sidebar-logo span,
+.stat-value,
+.stat-label,
+.section-head h2,
+.page-header h1,
+.modal-header h3,
+.auth-card h1,
+.auth-logo-agency,
+.auth-logo-office,
+.auth-logo-system,
+.agency-name,
+.agency-unit,
+.mobile-topbar-title,
+.btn {
+  font-family: "Montserrat", system-ui, sans-serif;
+}
 button {
   font-family: inherit;
   cursor: pointer;
 }
 code {
-  font-family: "DM Mono", monospace;
+  font-family: "Fira Code", monospace;
   font-size: 12px;
   background: var(--surface2);
   padding: 2px 6px;
@@ -667,6 +685,7 @@ label small {
 input[type="text"],
 input[type="email"],
 input[type="password"],
+input[type="date"],
 select,
 textarea {
   width: 100%;
@@ -684,6 +703,7 @@ textarea {
     box-shadow 0.15s;
 }
 input:focus,
+input[type="date"]:focus,
 select:focus,
 textarea:focus {
   border-color: var(--primary);
@@ -866,6 +886,48 @@ small {
   max-width: 180px;
   margin-bottom: 0;
 }
+.filter-date-range {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 0.3rem 0.65rem;
+  box-shadow: var(--glass-shadow);
+}
+.filter-date-range input[type="date"] {
+  width: auto;
+  min-width: 130px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.82rem;
+  margin-bottom: 0;
+}
+.filter-date-range input[type="date"]:focus {
+  box-shadow: none;
+  border: none;
+  outline: none;
+}
+.filter-date-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  padding-right: 0.25rem;
+  border-right: 1px solid var(--glass-border);
+  margin-right: 0.15rem;
+}
+.filter-date-sep {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
 
 /* ── Modals ── */
 .modal-overlay {
@@ -1033,6 +1095,13 @@ small {
   .filter-bar select {
     max-width: 100%;
   }
+  .filter-date-range {
+    width: 100%;
+  }
+  .filter-date-range input[type="date"] {
+    flex: 1;
+    min-width: 0;
+  }
 
   /* Modal fits the screen */
   .modal {
@@ -1133,6 +1202,7 @@ small {
 [data-theme="dark"] input[type="text"],
 [data-theme="dark"] input[type="email"],
 [data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="date"],
 [data-theme="dark"] select,
 [data-theme="dark"] textarea {
   background: rgba(255, 255, 255, 0.05);
@@ -1140,7 +1210,11 @@ small {
   border-color: rgba(255, 255, 255, 0.1);
   box-shadow: var(--neu-input);
 }
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.5);
+}
 [data-theme="dark"] input:focus,
+[data-theme="dark"] input[type="date"]:focus,
 [data-theme="dark"] select:focus,
 [data-theme="dark"] textarea:focus {
   border-color: var(--primary);

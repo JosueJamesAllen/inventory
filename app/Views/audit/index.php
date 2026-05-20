@@ -17,8 +17,24 @@
 
 <!-- ── Equipment Audit ── -->
 <?php if ($tab === 'equipment'): ?>
+<div class="filter-bar">
+  <input  type="text"   id="eq-search"      placeholder="Search device or borrower…" oninput="filterAudit('eq')">
+  <select id="eq-status"                    onchange="filterAudit('eq')">
+    <option value="">All Status</option>
+    <option value="active">Active</option>
+    <option value="returned">Returned</option>
+  </select>
+  <div class="filter-date-range">
+    <span class="filter-date-label">Borrowed</span>
+    <span class="filter-date-sep">From</span>
+    <input type="date" id="eq-date-from" onchange="filterAudit('eq')">
+    <span class="filter-date-sep">To</span>
+    <input type="date" id="eq-date-to"   onchange="filterAudit('eq')">
+  </div>
+  <button class="btn btn-outline btn-sm" onclick="resetAuditFilter('eq')">Reset</button>
+</div>
 <div class="table-card">
-  <table>
+  <table id="eq-table">
     <thead>
       <tr>
         <th>Device</th>
@@ -35,7 +51,12 @@
     </thead>
     <tbody>
     <?php foreach ($equipmentLog as $r): ?>
-    <tr>
+    <?php $isReturned = !empty($r['returned_at']); ?>
+    <tr
+      data-search="<?= htmlspecialchars(strtolower($r['device_name'] . ' ' . $r['asset_tag'] . ' ' . $r['borrower_name'] . ' ' . $r['department'])) ?>"
+      data-status="<?= $isReturned ? 'returned' : 'active' ?>"
+      data-date="<?= date('Y-m-d', strtotime($r['borrowed_at'])) ?>"
+    >
       <td>
         <strong><?= htmlspecialchars($r['device_name']) ?></strong>
         <br><span class="text-muted"><?= htmlspecialchars($r['asset_tag']) ?></span>
@@ -45,20 +66,20 @@
       <td><?= htmlspecialchars($r['department']) ?></td>
       <td><?= date('M d, Y H:i', strtotime($r['borrowed_at'])) ?></td>
       <td>
-        <?= $r['returned_at']
+        <?= $isReturned
           ? date('M d, Y H:i', strtotime($r['returned_at']))
           : '<span class="text-muted">—</span>' ?>
       </td>
       <td><?= $r['facilitated_by_name'] ? htmlspecialchars($r['facilitated_by_name']) : '<span class="text-muted">Self</span>' ?></td>
       <td>
-        <?php if ($r['returned_at']): ?>
+        <?php if ($isReturned): ?>
           <?= $r['returned_by_name'] ? htmlspecialchars($r['returned_by_name']) : '<span class="text-muted">Self</span>' ?>
         <?php else: ?>
           <span class="text-muted">—</span>
         <?php endif; ?>
       </td>
       <td>
-        <?php if ($r['returned_at']): ?>
+        <?php if ($isReturned): ?>
           <span class="status-badge status-available">Returned</span>
         <?php else: ?>
           <span class="status-badge status-borrowed">Active</span>
@@ -76,8 +97,20 @@
 
 <!-- ── Employee Audit ── -->
 <?php elseif ($tab === 'employee'): ?>
+<div class="filter-bar">
+  <input  type="text"   id="emp-search"     placeholder="Search employee or device…" oninput="filterAudit('emp')">
+  <input  type="text"   id="emp-dept"       placeholder="Department…"                oninput="filterAudit('emp')">
+  <div class="filter-date-range">
+    <span class="filter-date-label">Borrowed</span>
+    <span class="filter-date-sep">From</span>
+    <input type="date" id="emp-date-from" onchange="filterAudit('emp')">
+    <span class="filter-date-sep">To</span>
+    <input type="date" id="emp-date-to"   onchange="filterAudit('emp')">
+  </div>
+  <button class="btn btn-outline btn-sm" onclick="resetAuditFilter('emp')">Reset</button>
+</div>
 <div class="table-card">
-  <table>
+  <table id="emp-table">
     <thead>
       <tr>
         <th>Employee</th>
@@ -91,7 +124,11 @@
     </thead>
     <tbody>
     <?php foreach ($employeeLog as $r): ?>
-    <tr>
+    <tr
+      data-search="<?= htmlspecialchars(strtolower($r['employee_name'] . ' ' . $r['qr_code'] . ' ' . $r['device_name'] . ' ' . $r['asset_tag'])) ?>"
+      data-dept="<?= htmlspecialchars(strtolower($r['department'])) ?>"
+      data-date="<?= date('Y-m-d', strtotime($r['borrowed_at'])) ?>"
+    >
       <td>
         <strong><?= htmlspecialchars($r['employee_name']) ?></strong>
         <br><span class="text-muted"><?= htmlspecialchars($r['qr_code']) ?></span>
@@ -117,8 +154,25 @@
 
 <!-- ── Reconciliations ── -->
 <?php else: ?>
+<div class="filter-bar">
+  <input  type="text"   id="rec-search"     placeholder="Search device or staff…"    oninput="filterAudit('rec')">
+  <select id="rec-status"                   onchange="filterAudit('rec')">
+    <option value="">All New Status</option>
+    <option value="available">Available</option>
+    <option value="borrowed">Borrowed</option>
+    <option value="out_of_service">Out of Service</option>
+  </select>
+  <div class="filter-date-range">
+    <span class="filter-date-label">Logged</span>
+    <span class="filter-date-sep">From</span>
+    <input type="date" id="rec-date-from" onchange="filterAudit('rec')">
+    <span class="filter-date-sep">To</span>
+    <input type="date" id="rec-date-to"   onchange="filterAudit('rec')">
+  </div>
+  <button class="btn btn-outline btn-sm" onclick="resetAuditFilter('rec')">Reset</button>
+</div>
 <div class="table-card">
-  <table>
+  <table id="rec-table">
     <thead>
       <tr>
         <th>Device</th>
@@ -132,7 +186,11 @@
     </thead>
     <tbody>
     <?php foreach ($reconLog as $r): ?>
-    <tr>
+    <tr
+      data-search="<?= htmlspecialchars(strtolower($r['device_name'] . ' ' . $r['asset_tag'] . ' ' . $r['staff_name'])) ?>"
+      data-status="<?= htmlspecialchars($r['new_status']) ?>"
+      data-date="<?= date('Y-m-d', strtotime($r['created_at'])) ?>"
+    >
       <td><strong><?= htmlspecialchars($r['device_name']) ?></strong></td>
       <td><code><?= htmlspecialchars($r['asset_tag']) ?></code></td>
       <td><?= htmlspecialchars($r['staff_name']) ?></td>
@@ -149,3 +207,40 @@
   </table>
 </div>
 <?php endif; ?>
+
+<script>
+function filterAudit(prefix) {
+  const search   = (document.getElementById(prefix + '-search')    ?.value || '').toLowerCase();
+  const status   = (document.getElementById(prefix + '-status')    ?.value || '').toLowerCase();
+  const dept     = (document.getElementById(prefix + '-dept')      ?.value || '').toLowerCase();
+  const dateFrom = document.getElementById(prefix + '-date-from')  ?.value || '';
+  const dateTo   = document.getElementById(prefix + '-date-to')    ?.value || '';
+
+  const table = document.getElementById(prefix + '-table');
+  if (!table) return;
+
+  table.querySelectorAll('tbody tr').forEach(row => {
+    const rowSearch = (row.dataset.search || '');
+    const rowStatus = (row.dataset.status || '');
+    const rowDept   = (row.dataset.dept   || '');
+    const rowDate   = (row.dataset.date   || '');
+
+    const ok =
+      (!search   || rowSearch.includes(search)) &&
+      (!status   || rowStatus === status) &&
+      (!dept     || rowDept.includes(dept)) &&
+      (!dateFrom || rowDate >= dateFrom) &&
+      (!dateTo   || rowDate <= dateTo);
+
+    row.style.display = ok ? '' : 'none';
+  });
+}
+
+function resetAuditFilter(prefix) {
+  ['search','status','dept','date-from','date-to'].forEach(id => {
+    const el = document.getElementById(prefix + '-' + id);
+    if (el) el.value = '';
+  });
+  filterAudit(prefix);
+}
+</script>
