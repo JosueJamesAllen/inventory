@@ -70,7 +70,9 @@
         <th>Type</th>
         <th>Borrower</th>
         <th>Department</th>
+        <th>Purpose</th>
         <th>Borrowed At</th>
+        <th>Due</th>
         <th>Duration</th>
         <th>Facilitated By</th>
       </tr>
@@ -85,7 +87,18 @@
       <td><span class="chip"><?= htmlspecialchars($b['device_type']) ?></span></td>
       <td><?= $b['borrower_name'] ? htmlspecialchars($b['borrower_name']) : '<span class="text-muted">—</span>' ?></td>
       <td><?= $b['department'] ? htmlspecialchars($b['department']) : '<span class="text-muted">—</span>' ?></td>
+      <td><?= $b['purpose'] ? htmlspecialchars($b['purpose']) : '<span class="text-muted">—</span>' ?></td>
       <td><?= $b['borrowed_at'] ? date('M d, H:i', strtotime($b['borrowed_at'])) : '<span class="text-muted">Manual</span>' ?></td>
+      <td>
+        <?php if ($b['expected_return_at']): ?>
+          <?php $overdue = strtotime($b['expected_return_at']) < strtotime('today'); ?>
+          <span class="badge <?= $overdue ? 'badge-red' : 'badge-blue' ?>">
+            <?= $overdue ? '⚠ ' : '' ?><?= date('M d', strtotime($b['expected_return_at'])) ?>
+          </span>
+        <?php else: ?>
+          <span class="text-muted">Indefinite</span>
+        <?php endif; ?>
+      </td>
       <td>
         <?php if ($b['hours_ago'] !== null): ?>
         <span class="duration <?= $b['hours_ago'] >= 8 ? 'duration-warn' : '' ?>">

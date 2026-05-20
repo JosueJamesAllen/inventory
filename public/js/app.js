@@ -279,14 +279,28 @@ function initScanner(prefix) {
       step2Num.classList.add("done");
       step2Num.textContent = "✓";
       setFeedback(`${prefix}-feedback-dev`, "✅", code, "feedback-success");
-      setFeedback(
-        `${prefix}-feedback-emp`,
-        "⏳",
-        "Submitting...",
-        "feedback-submitting",
-      );
 
-      setTimeout(() => form.submit(), 600);
+      // Step 3 — show borrow details form (borrow only; return still auto-submits)
+      if (prefix === "borrow") {
+        const step3El  = document.getElementById("borrow-step3");
+        const step3Num = document.getElementById("borrow-step3-num");
+        const summary  = document.getElementById("borrow-confirm-summary");
+        const empVal   = empInput.value;
+        if (step3El) {
+          step3El.style.display = "block";
+          step3El.classList.add("unlocked");
+          if (step3Num) { step3Num.classList.add("active"); }
+          if (summary) {
+            summary.innerHTML =
+              `<span class="confirm-chip">👤 ${empVal}</span>` +
+              `<span class="confirm-chip">💻 ${code}</span>`;
+          }
+          document.getElementById("borrow-purpose")?.focus();
+        }
+      } else {
+        setFeedback(`${prefix}-feedback-emp`, "⏳", "Submitting...", "feedback-submitting");
+        setTimeout(() => form.submit(), 600);
+      }
     });
   });
 }
@@ -315,6 +329,20 @@ function resetScanner(prefix) {
 
   const resetBtn = document.getElementById(`${prefix}-reset`);
   if (resetBtn) resetBtn.style.display = "none";
+
+  // Reset step 3 if borrow
+  if (prefix === "borrow") {
+    const step3El = document.getElementById("borrow-step3");
+    const step3Num = document.getElementById("borrow-step3-num");
+    if (step3El) { step3El.style.display = "none"; step3El.classList.remove("unlocked"); }
+    if (step3Num) { step3Num.classList.remove("active", "done"); step3Num.textContent = "3"; }
+    const purposeInput = document.getElementById("borrow-purpose");
+    const dateInput    = document.getElementById("borrow-return-date");
+    const cbInput      = document.getElementById("borrow-indefinite");
+    if (purposeInput) purposeInput.value = "";
+    if (dateInput)    { dateInput.value = ""; dateInput.disabled = false; }
+    if (cbInput)      cbInput.checked = false;
+  }
 
   // Restart step 1 camera
   initScanner(prefix);
@@ -391,6 +419,13 @@ function selectType(type) {
   activeScannerPrefix = type;
 
   setTimeout(() => initScanner(type), 100);
+}
+
+function toggleIndefinite(cb) {
+  const dateInput = document.getElementById("borrow-return-date");
+  if (!dateInput) return;
+  dateInput.disabled = cb.checked;
+  if (cb.checked) dateInput.value = "";
 }
 
 function goBack() {

@@ -363,10 +363,15 @@ function openDeviceHistory(id) {
         const badge   = active
           ? '<span class="status-badge status-borrowed">Active</span>'
           : '<span class="status-badge status-available">Returned</span>';
-        const borrowed = formatDate(r.borrowed_at);
-        const returned = r.returned_at ? formatDate(r.returned_at) : '—';
-        const via      = r.facilitated_by_name ? 'via ' + escHtml(r.facilitated_by_name) : 'Self-serve';
-        const retBy    = r.returned_by_name ? 'Returned by ' + escHtml(r.returned_by_name) : (r.returned_at ? 'Self-serve' : '');
+        const borrowed  = formatDate(r.borrowed_at);
+        const returned  = r.returned_at ? formatDate(r.returned_at) : '—';
+        const via       = r.facilitated_by_name ? 'via ' + escHtml(r.facilitated_by_name) : 'Self-serve';
+        const retBy     = r.returned_by_name ? 'Returned by ' + escHtml(r.returned_by_name) : (r.returned_at ? 'Self-serve' : '');
+        const dueStr    = r.expected_return_at
+          ? (() => { const d = new Date(r.expected_return_at); return d.toLocaleDateString('en-PH', {month:'short',day:'numeric',year:'numeric'}); })()
+          : 'Indefinite';
+        const isOverdue = !r.returned_at && r.expected_return_at && new Date(r.expected_return_at) < new Date();
+        const dueBadge  = `<span style="font-size:.75rem;color:${isOverdue ? 'var(--error)' : 'var(--text2)'}">Due: ${dueStr}${isOverdue ? ' ⚠' : ''}</span>`;
 
         return `
           <div class="history-entry ${active ? 'history-active' : ''}">
@@ -377,9 +382,11 @@ function openDeviceHistory(id) {
                 <span class="text-muted" style="font-size:.78rem">${escHtml(r.department)}</span>
                 ${badge}
               </div>
+              ${r.purpose ? `<div style="font-size:.8rem;margin:.15rem 0 .35rem;color:var(--text)">Purpose: <em>${escHtml(r.purpose)}</em></div>` : ''}
               <div class="history-row-dates">
                 <span>Borrowed: <b>${borrowed}</b></span>
                 <span>Returned: <b>${returned}</b></span>
+                ${dueBadge}
               </div>
               <div class="history-row-meta">
                 <span class="text-muted">${via}</span>

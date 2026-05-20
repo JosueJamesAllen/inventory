@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root -e \"SHOW DATABASES;\" 2>$null)",
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root -e \"DESCRIBE inventory_db.transactions;\")",
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root inventory_db -e \"ALTER TABLE transactions ADD COLUMN purpose VARCHAR\\(255\\) NULL AFTER borrowed_at, ADD COLUMN expected_return_at DATE NULL AFTER purpose;\")"
+    ]
+  }
+}

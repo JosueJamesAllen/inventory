@@ -6,11 +6,11 @@ class Transaction extends BaseModel
 {
     protected string $table = 'transactions';
 
-    public function borrow(int $deviceId, int $borrowerId, ?int $facilitatedBy = null): int
+    public function borrow(int $deviceId, int $borrowerId, ?int $facilitatedBy = null, ?string $purpose = null, ?string $expectedReturnAt = null): int
     {
         return $this->insertGetId(
-            "INSERT INTO transactions (device_id, borrower_id, facilitated_by) VALUES (?, ?, ?)",
-            [$deviceId, $borrowerId, $facilitatedBy]
+            "INSERT INTO transactions (device_id, borrower_id, facilitated_by, purpose, expected_return_at) VALUES (?, ?, ?, ?, ?)",
+            [$deviceId, $borrowerId, $facilitatedBy, $purpose ?: null, $expectedReturnAt ?: null]
         );
     }
 
@@ -36,6 +36,7 @@ class Transaction extends BaseModel
             SELECT d.name AS device_name, d.asset_tag, d.type AS device_type,
                    d.cabinet, d.shelf,
                    t.id, t.borrowed_at, t.facilitated_by,
+                   t.purpose, t.expected_return_at,
                    e1.name AS borrower_name, e1.department,
                    e2.name AS facilitated_by_name,
                    CASE WHEN t.borrowed_at IS NOT NULL
@@ -99,7 +100,7 @@ class Transaction extends BaseModel
     public function historyByDevice(int $deviceId): array
     {
         return $this->query("
-            SELECT t.id, t.borrowed_at, t.returned_at, t.notes,
+            SELECT t.id, t.borrowed_at, t.returned_at, t.purpose, t.expected_return_at, t.notes,
                    e1.name AS borrower_name, e1.department,
                    e2.name AS facilitated_by_name,
                    e3.name AS returned_by_name
