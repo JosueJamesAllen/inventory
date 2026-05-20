@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\RoleMiddleware;
 use App\Models\Device;
+use App\Models\Location;
 use App\Models\Reconciliation;
 use App\Models\Transaction;
 use Core\Response;
@@ -16,8 +17,10 @@ class DeviceController extends BaseController
     {
         AuthMiddleware::handle();
 
+        $loc = new Location();
         $this->view('devices.index', [
-            'devices' => (new Device())->all(),
+            'devices'          => (new Device())->all(),
+            'locationsByGroup' => $loc->grouped(),
         ]);
     }
 

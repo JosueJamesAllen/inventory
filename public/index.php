@@ -80,5 +80,10 @@ $router->post('/employees/update',  'EmployeeController@update');
 $router->get('/audit',        'AuditController@index');
 $router->get('/audit/export', 'AuditController@exportCsv');
 
+// Maintenance
+$router->get( '/maintenance',                    'MaintenanceController@index');
+$router->post('/maintenance/locations',          'MaintenanceController@storeLocation');
+$router->post('/maintenance/locations/delete',   'MaintenanceController@deleteLocation');
+
 // ── Dispatch ──────────────────────────────────────────────
 $router->dispatch($request);

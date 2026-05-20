@@ -60,6 +60,14 @@ CREATE TABLE IF NOT EXISTS reconciliations (
     FOREIGN KEY (performed_by) REFERENCES employees(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS locations (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    cabinet    VARCHAR(80) NOT NULL,
+    shelf      VARCHAR(80) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_location (cabinet, shelf)
+) ENGINE=InnoDB;
+
 -- ── Seed: Employees ─────────────────────────────────────────
 
 INSERT INTO employees (name, department, qr_code, role) VALUES
@@ -407,6 +415,24 @@ INSERT INTO devices (name, type, asset_tag, qr_code, status, cabinet, shelf) VAL
 ('Coby Tablet 89', 'Tablet', 'ICS-DIT-0000-23-396-02586', 'QR-DEV-T300', 'Available', 'Cabinet 2', 'CBMS 2B'),
 ('Coby Tablet 90', 'Tablet', 'ICS-DIT-0000-23-396-02587', 'QR-DEV-T301', 'Available', 'Cabinet 2', 'CBMS 2B'),
 ('Coby Tablet 91', 'Tablet', 'ICS-DIT-0000-23-396-02588', 'QR-DEV-T302', 'Available', 'Cabinet 2', 'CBMS 2B');
+-- ── Seed: Locations ────────────────────────────────────────
+
+INSERT INTO locations (cabinet, shelf) VALUES
+('Cabinet A', 'Shelf 1'),
+('Cabinet A', 'Shelf 2'),
+('Cabinet A', 'Shelf 3'),
+('Cabinet B', 'Shelf 1'),
+('Cabinet B', 'Shelf 2'),
+('Cabinet C', 'Shelf 1'),
+('Cabinet C', 'Shelf 2'),
+('Cabinet C', 'Shelf 3'),
+('Cabinet 1', 'CBMS 1A'),
+('Cabinet 1', 'CBMS 1B'),
+('Cabinet 1', 'CBMS 1C'),
+('Cabinet 1', 'CBMS 1D'),
+('Cabinet 2', 'CBMS 2A'),
+('Cabinet 2', 'CBMS 2B');
+
 -- ── Seed: Transactions ──────────────────────────────────────
 
 -- Active borrow: Maria borrowed ThinkPad X1 (facilitated by Frenz)

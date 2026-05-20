@@ -27,8 +27,9 @@ function openEditDevice(device) {
   document.getElementById("edit-device-id").value = device.id;
   document.getElementById("edit-device-name").value = device.name;
   document.getElementById("edit-device-type").value = device.type;
-  document.getElementById("edit-device-cabinet").value = device.cabinet;
-  document.getElementById("edit-device-shelf").value = device.shelf;
+  document.getElementById("edit-device-cabinet").value = device.cabinet || "";
+  if (typeof updateShelfOptions === "function") updateShelfOptions("edit");
+  document.getElementById("edit-device-shelf").value = device.shelf || "";
   document.getElementById("edit-device-status").value = device.status;
   document.getElementById("edit-device-notes").value = device.notes || "";
   openModal("modal-edit-device");

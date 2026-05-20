@@ -121,11 +121,21 @@
         </div>
         <div class="form-group">
           <label>Cabinet *</label>
-          <input type="text" name="cabinet" required placeholder="Cabinet A">
+          <select name="cabinet" id="add-device-cabinet" required onchange="updateShelfOptions('add')">
+            <option value="">Select cabinet...</option>
+            <?php foreach (array_keys($locationsByGroup) as $cab): ?>
+            <option value="<?= htmlspecialchars($cab) ?>"><?= htmlspecialchars($cab) ?></option>
+            <?php endforeach; ?>
+          </select>
+          <?php if (empty($locationsByGroup)): ?>
+          <small><a href="/inventory/public/maintenance">No locations defined — add them in Maintenance</a></small>
+          <?php endif; ?>
         </div>
         <div class="form-group">
           <label>Shelf *</label>
-          <input type="text" name="shelf" required placeholder="Shelf 1">
+          <select name="shelf" id="add-device-shelf" required>
+            <option value="">Select cabinet first...</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Notes</label>
@@ -161,11 +171,18 @@
         </div>
         <div class="form-group">
           <label>Cabinet *</label>
-          <input type="text" name="cabinet" id="edit-device-cabinet" required>
+          <select name="cabinet" id="edit-device-cabinet" required onchange="updateShelfOptions('edit')">
+            <option value="">Select cabinet...</option>
+            <?php foreach (array_keys($locationsByGroup) as $cab): ?>
+            <option value="<?= htmlspecialchars($cab) ?>"><?= htmlspecialchars($cab) ?></option>
+            <?php endforeach; ?>
+          </select>
         </div>
         <div class="form-group">
           <label>Shelf *</label>
-          <input type="text" name="shelf" id="edit-device-shelf" required>
+          <select name="shelf" id="edit-device-shelf" required>
+            <option value="">Select cabinet first...</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Status *</label>
@@ -265,6 +282,23 @@
 </div>
 
 <script>
+const _locGroups = <?= json_encode($locationsByGroup) ?>;
+
+function updateShelfOptions(prefix) {
+  const cab      = document.getElementById(prefix + '-device-cabinet').value;
+  const shelfSel = document.getElementById(prefix + '-device-shelf');
+  const prev     = shelfSel.value;
+  shelfSel.innerHTML = '<option value="">Select shelf...</option>';
+  if (_locGroups[cab]) {
+    _locGroups[cab].forEach(function(shelf) {
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = shelf;
+      shelfSel.appendChild(opt);
+    });
+    shelfSel.value = prev;
+  }
+}
+
 function bulkUpdateBar() {
   const checked = document.querySelectorAll('.bulk-cb:checked');
   const bar     = document.getElementById('bulk-bar');
