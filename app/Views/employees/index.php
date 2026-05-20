@@ -5,10 +5,74 @@
     <h1>Employees</h1>
     <p class="page-sub">Staff registry · <?= count($employees) ?> employees</p>
   </div>
-  <?php if ($isAdmin): ?>
-  <button class="btn btn-primary" onclick="openModal('modal-add-employee')">+ Add Employee</button>
-  <?php endif; ?>
+  <div class="btn-group">
+    <?php if ($isAdmin): ?>
+    <button class="btn btn-outline" onclick="printEmployeeQrs()">Print QR Codes</button>
+    <button class="btn btn-primary" onclick="openModal('modal-add-employee')">+ Add Employee</button>
+    <?php endif; ?>
+  </div>
 </div>
+
+<div class="tabs">
+  <a href="/inventory/public/employees?tab=list"    class="tab <?= $tab === 'list'    ? 'tab-active' : '' ?>">All Employees</a>
+  <a href="/inventory/public/employees?tab=summary" class="tab <?= $tab === 'summary' ? 'tab-active' : '' ?>">Borrowing Summary</a>
+</div>
+
+<?php if ($tab === 'summary'): ?>
+
+<?php
+// Group flat rows by employee
+$grouped = [];
+foreach ($summary as $row) {
+    $grouped[$row['id']]['name']       = $row['name'];
+    $grouped[$row['id']]['department'] = $row['department'];
+    $grouped[$row['id']]['devices'][]  = $row;
+}
+?>
+
+<?php if (empty($grouped)): ?>
+<div class="empty-state">
+  <div class="empty-icon">✅</div>
+  <p>No devices are currently borrowed.</p>
+</div>
+<?php else: ?>
+<div class="borrow-summary-grid">
+  <?php foreach ($grouped as $empId => $emp): ?>
+  <div class="borrow-summary-card">
+    <div class="borrow-summary-header">
+      <div class="user-avatar"><?= strtoupper(substr($emp['name'], 0, 1)) ?></div>
+      <div>
+        <div class="borrow-summary-name"><?= htmlspecialchars($emp['name']) ?></div>
+        <div class="borrow-summary-dept"><?= htmlspecialchars($emp['department']) ?></div>
+      </div>
+      <span class="badge badge-amber"><?= count($emp['devices']) ?> borrowed</span>
+    </div>
+    <div class="borrow-summary-devices">
+      <?php foreach ($emp['devices'] as $dev): ?>
+      <?php
+        $hours = (float)$dev['hours_borrowed'];
+        if ($hours < 1)       $ago = 'Less than 1 hr ago';
+        elseif ($hours < 24)  $ago = round($hours) . ' hr' . (round($hours) !== 1 ? 's' : '') . ' ago';
+        else                  $ago = round($hours / 24, 1) . ' day' . (round($hours / 24, 1) !== 1.0 ? 's' : '') . ' ago';
+      ?>
+      <div class="borrow-device-row">
+        <div class="borrow-device-info">
+          <strong><?= htmlspecialchars($dev['device_name']) ?></strong>
+          <span class="text-muted"><?= htmlspecialchars($dev['asset_tag']) ?></span>
+        </div>
+        <div class="borrow-device-meta">
+          <span class="chip"><?= htmlspecialchars($dev['device_type']) ?></span>
+          <span class="text-muted" style="font-size:.75rem"><?= $ago ?></span>
+        </div>
+      </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+  <?php endforeach; ?>
+</div>
+<?php endif; ?>
+
+<?php else: ?>
 
 <div class="table-card">
   <table>
@@ -133,3 +197,20 @@
 </div>
 
 <?php endif; ?>
+
+<?php if ($isAdmin): ?>
+<script>
+var employeeQrData = <?= json_encode(array_map(fn($e) => [
+  'name' => $e['name'],
+  'sub'  => $e['department'],
+  'qr'   => $e['qr_code'],
+], $employees)) ?>;
+
+function printEmployeeQrs() {
+  if (!employeeQrData.length) { alert('No employees to print.'); return; }
+  openQrPrintWindow(employeeQrData, 'Employees');
+}
+</script>
+<?php endif; ?>
+
+<?php endif; // end tab === 'list' ?>

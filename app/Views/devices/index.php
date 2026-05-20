@@ -5,9 +5,12 @@
     <h1>Devices</h1>
     <p class="page-sub">All IT equipment · <?= count($devices) ?> total</p>
   </div>
-  <?php if ($canEdit): ?>
-  <button class="btn btn-primary" onclick="openModal('modal-add-device')">+ Add Device</button>
-  <?php endif; ?>
+  <div class="btn-group">
+    <button class="btn btn-outline" onclick="printDeviceQrs()">Print QR Codes</button>
+    <?php if ($canEdit): ?>
+    <button class="btn btn-primary" onclick="openModal('modal-add-device')">+ Add Device</button>
+    <?php endif; ?>
+  </div>
 </div>
 
 <!-- Filters -->
@@ -34,6 +37,7 @@
   <table id="devicesTable">
     <thead>
       <tr>
+        <?php if ($canEdit): ?><th style="width:2rem"><input type="checkbox" id="bulk-select-all" title="Select all" onchange="bulkToggleAll(this)"></th><?php endif; ?>
         <th>Device</th>
         <th>Type</th>
         <th>Asset Tag</th>
@@ -49,6 +53,9 @@
     <tr data-status="<?= htmlspecialchars($d['status']) ?>"
         data-type="<?= htmlspecialchars(strtolower($d['type'])) ?>"
         data-search="<?= htmlspecialchars(strtolower($d['name'] . ' ' . $d['asset_tag'] . ' ' . $d['type'])) ?>">
+      <?php if ($canEdit): ?>
+      <td><input type="checkbox" class="bulk-cb" value="<?= (int)$d['id'] ?>" onchange="bulkUpdateBar()"></td>
+      <?php endif; ?>
       <td>
         <strong><?= htmlspecialchars($d['name']) ?></strong>
         <?php if ($d['notes']): ?>
@@ -220,6 +227,26 @@
 
 <?php endif; ?>
 
+<?php if ($canEdit): ?>
+<!-- ── Bulk action bar ── -->
+<form id="bulk-form" method="POST" action="/inventory/public/devices/bulk">
+  <?= $csrf ?>
+  <input type="hidden" name="bulk_status" id="bulk-status-input">
+  <div id="bulk-bar" class="bulk-bar">
+    <span id="bulk-count" class="bulk-bar-count">0 selected</span>
+    <div class="bulk-bar-actions">
+      <select id="bulk-status-select" class="bulk-bar-select">
+        <option value="">Set status to…</option>
+        <option value="available">Available</option>
+        <option value="out_of_service">Out of Service</option>
+      </select>
+      <button type="button" class="btn btn-primary btn-sm" onclick="bulkSubmit()">Apply</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="bulkClear()">Cancel</button>
+    </div>
+  </div>
+</form>
+<?php endif; ?>
+
 <!-- ── Modal: Device History ── -->
 <div id="modal-device-history" class="modal-overlay" style="display:none">
   <div class="modal modal-lg">
@@ -237,6 +264,75 @@
 </div>
 
 <script>
+function bulkUpdateBar() {
+  const checked = document.querySelectorAll('.bulk-cb:checked');
+  const bar     = document.getElementById('bulk-bar');
+  const count   = document.getElementById('bulk-count');
+  if (!bar) return;
+  count.textContent = checked.length + ' device' + (checked.length !== 1 ? 's' : '') + ' selected';
+  bar.classList.toggle('bulk-bar-visible', checked.length > 0);
+  document.getElementById('bulk-select-all').indeterminate =
+    checked.length > 0 && checked.length < document.querySelectorAll('.bulk-cb').length;
+}
+
+function bulkToggleAll(master) {
+  document.querySelectorAll('.bulk-cb').forEach(cb => {
+    const row = cb.closest('tr');
+    if (!row || row.style.display === 'none') return;
+    cb.checked = master.checked;
+  });
+  bulkUpdateBar();
+}
+
+function bulkClear() {
+  document.querySelectorAll('.bulk-cb, #bulk-select-all').forEach(cb => cb.checked = false);
+  const bar = document.getElementById('bulk-bar');
+  if (bar) bar.classList.remove('bulk-bar-visible');
+}
+
+function bulkSubmit() {
+  const status = document.getElementById('bulk-status-select').value;
+  if (!status) { alert('Please choose a status to apply.'); return; }
+
+  const ids    = [...document.querySelectorAll('.bulk-cb:checked')].map(cb => cb.value);
+  if (!ids.length) return;
+
+  const label  = status.replace('_', ' ');
+  if (!confirm(`Set ${ids.length} device(s) to "${label}"?`)) return;
+
+  document.getElementById('bulk-status-input').value = status;
+
+  const form = document.getElementById('bulk-form');
+  document.querySelectorAll('input[name="device_ids[]"]').forEach(el => el.remove());
+  ids.forEach(id => {
+    const inp = document.createElement('input');
+    inp.type  = 'hidden';
+    inp.name  = 'device_ids[]';
+    inp.value = id;
+    form.appendChild(inp);
+  });
+  form.submit();
+}
+
+function printDeviceQrs() {
+  const rows  = document.querySelectorAll('#devicesTable tbody tr');
+  const items = [];
+  rows.forEach(row => {
+    if (row.style.display === 'none') return;
+    const cells = row.querySelectorAll('td');
+    // With checkbox col: cells[0]=cb, [1]=name, [2]=type, [3]=asset_tag, [4]=qr_code
+    // Without checkbox col (borrower): cells[0]=name, [1]=type, [2]=asset_tag, [3]=qr_code
+    const hasCb = cells[0].querySelector('input[type="checkbox"]');
+    const offset = hasCb ? 1 : 0;
+    const name     = cells[offset].querySelector('strong')?.textContent.trim() || '';
+    const assetTag = cells[offset + 2].textContent.trim();
+    const qrCode   = cells[offset + 3].textContent.trim();
+    if (qrCode) items.push({ name, sub: assetTag, qr: qrCode });
+  });
+  if (!items.length) { alert('No devices to print.'); return; }
+  openQrPrintWindow(items, 'Devices');
+}
+
 function openDeviceHistory(id) {
   document.getElementById('history-device-name').textContent = 'Device History';
   document.getElementById('history-device-meta').textContent = '';

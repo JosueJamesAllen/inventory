@@ -73,6 +73,35 @@ class DeviceController extends BaseController
         Response::redirect('/devices');
     }
 
+    public function bulkUpdate(): void
+    {
+        RoleMiddleware::require('admin', 'it_staff');
+        $this->request->verifyCsrf();
+
+        $ids       = array_filter(array_map('intval', (array)($_POST['device_ids'] ?? [])));
+        $newStatus = $this->request->post('bulk_status');
+        $allowed   = ['available', 'borrowed', 'out_of_service'];
+
+        if (empty($ids) || !in_array($newStatus, $allowed)) {
+            Session::flash('error', 'Invalid bulk update request.');
+            Response::redirect('/devices');
+        }
+
+        $deviceModel = new Device();
+        $txModel     = new Transaction();
+
+        foreach ($ids as $id) {
+            if ($newStatus === 'available') {
+                $txModel->closeByDevice($id, 'Bulk status update to available.');
+            }
+            $deviceModel->setStatus($id, $newStatus);
+        }
+
+        $label = str_replace('_', ' ', $newStatus);
+        Session::flash('success', count($ids) . ' device(s) set to <strong>' . $label . '</strong>.');
+        Response::redirect('/devices');
+    }
+
     public function history(): void
     {
         AuthMiddleware::handle();

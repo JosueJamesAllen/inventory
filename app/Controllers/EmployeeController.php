@@ -13,8 +13,13 @@ class EmployeeController extends BaseController
     {
         RoleMiddleware::require('admin', 'it_staff');
 
+        $model = new Employee();
+        $tab   = $_GET['tab'] ?? 'list';
+
         $this->view('employees.index', [
-            'employees' => (new Employee())->all(),
+            'employees' => $model->all(),
+            'summary'   => $model->borrowingSummary(),
+            'tab'       => $tab,
         ]);
     }
 

@@ -320,6 +320,67 @@ function resetScanner(prefix) {
   initScanner(prefix);
 }
 
+// ── QR Code print window ─────────────────────────────────
+function openQrPrintWindow(items, title) {
+  const cards = items.map(item => `
+    <div class="qr-card">
+      <div class="qr-wrap" data-qr="${item.qr.replace(/"/g, '&quot;')}"></div>
+      <div class="qr-name">${item.name.replace(/</g,'&lt;')}</div>
+      ${item.sub ? `<div class="qr-sub">${item.sub.replace(/</g,'&lt;')}</div>` : ''}
+    </div>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${title} — QR Codes</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Montserrat", Arial, sans-serif; background: #fff; color: #111; }
+    .toolbar { display: flex; align-items: center; gap: 1rem; padding: .75rem 1.25rem;
+               border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+    .toolbar h2 { font-size: 1rem; font-weight: 700; flex: 1; }
+    .toolbar button { padding: .45rem 1rem; border-radius: 7px; border: 1px solid #cbd5e1;
+                      font-size: .85rem; cursor: pointer; font-weight: 600; }
+    .toolbar .btn-print { background: #0f4c81; color: #fff; border-color: #0f4c81; }
+    .qr-grid { display: grid; grid-template-columns: repeat(4, 1fr);
+               gap: 1rem; padding: 1.25rem; }
+    .qr-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: .875rem .75rem;
+               text-align: center; break-inside: avoid; }
+    .qr-wrap { display: flex; justify-content: center; margin-bottom: .5rem; }
+    .qr-wrap canvas, .qr-wrap img { max-width: 100%; height: auto; }
+    .qr-name { font-size: .78rem; font-weight: 700; line-height: 1.3; }
+    .qr-sub  { font-size: .7rem; color: #64748b; margin-top: .15rem; }
+    @media print {
+      .toolbar { display: none; }
+      .qr-grid { gap: .6rem; padding: .5rem; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+    @media (max-width: 600px) { .qr-grid { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <h2>${title} — QR Codes (${items.length})</h2>
+    <button class="btn-print" onclick="window.print()">Print</button>
+    <button onclick="window.close()">Close</button>
+  </div>
+  <div class="qr-grid">${cards}</div>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>
+  <script>
+    document.querySelectorAll('.qr-wrap[data-qr]').forEach(function(el) {
+      new QRCode(el, { text: el.dataset.qr, width: 120, height: 120,
+                       correctLevel: QRCode.CorrectLevel.M });
+    });
+  <\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write(html);
+  win.document.close();
+}
+
 // ── Scan page type selector ───────────────────────────────
 function selectType(type) {
   document.getElementById("type-prompt").style.display = "none";
