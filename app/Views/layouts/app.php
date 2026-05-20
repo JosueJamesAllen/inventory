@@ -17,6 +17,20 @@
 
 <body>
 
+  <!-- ── Mobile top bar ── -->
+  <header class="mobile-topbar">
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+    <span class="mobile-topbar-title">IT Inventory</span>
+    <button class="btn-theme-icon" id="themeToggleMobile" title="Toggle dark mode">
+      <span id="themeIconMobile">🌙</span>
+    </button>
+  </header>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
   <div class="app-layout">
 
     <!-- ── Sidebar ── -->
@@ -80,6 +94,16 @@
 
     <!-- ── Main ── -->
     <main class="main-content">
+      <div class="agency-brand">
+        <img src="/inventory/public/img/Philippine_Statistics_Authority.svg.png"
+             alt="Philippine Statistics Authority"
+             class="agency-logo">
+        <div class="agency-text">
+          <span class="agency-name">Philippine Statistics Authority</span>
+          <span class="agency-unit">Marinduque Provincial Statistics Office</span>
+        </div>
+      </div>
+
       <?php if ($flash): ?>
         <div class="flash flash-<?= htmlspecialchars($flash['type']) ?>">
           <?= $flash['message'] ?>

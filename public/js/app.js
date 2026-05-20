@@ -83,9 +83,33 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
+// ── Mobile sidebar ────────────────────────────────────────
+const sidebar = document.getElementById("sidebar");
+const sidebarOverlay = document.getElementById("sidebarOverlay");
+const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+
+function openSidebar() {
+  sidebar.classList.add("sidebar-open");
+  sidebarOverlay.classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+function closeSidebar() {
+  sidebar.classList.remove("sidebar-open");
+  sidebarOverlay.classList.remove("active");
+  document.body.style.overflow = "";
+}
+
+if (mobileMenuBtn) mobileMenuBtn.addEventListener("click", openSidebar);
+if (sidebarOverlay) sidebarOverlay.addEventListener("click", closeSidebar);
+document.querySelectorAll(".nav-item").forEach((item) => {
+  item.addEventListener("click", closeSidebar);
+});
+
 // ── Dark mode ─────────────────────────────────────────────
 const themeToggle = document.getElementById("themeToggle");
 const themeIcon = document.getElementById("themeIcon");
+const themeToggleMobile = document.getElementById("themeToggleMobile");
+const themeIconMobile = document.getElementById("themeIconMobile");
 
 function getTheme() {
   try {
@@ -99,20 +123,28 @@ function setTheme(theme) {
   try {
     localStorage.setItem("theme", theme);
   } catch (e) {}
-  if (themeIcon) themeIcon.textContent = theme === "dark" ? "☀️" : "🌙";
+  const icon = theme === "dark" ? "☀️" : "🌙";
+  if (themeIcon) themeIcon.textContent = icon;
+  if (themeIconMobile) themeIconMobile.textContent = icon;
+  const authThemeIcon = document.getElementById("authThemeIcon");
+  if (authThemeIcon) authThemeIcon.textContent = icon;
 }
 
 setTheme(getTheme());
 
-if (themeToggle) {
-  themeToggle.addEventListener("click", function () {
-    setTheme(
-      document.documentElement.getAttribute("data-theme") === "dark"
-        ? "light"
-        : "dark",
-    );
-  });
+function toggleTheme() {
+  setTheme(
+    document.documentElement.getAttribute("data-theme") === "dark"
+      ? "light"
+      : "dark",
+  );
 }
+if (themeToggle) themeToggle.addEventListener("click", toggleTheme);
+if (themeToggleMobile) themeToggleMobile.addEventListener("click", toggleTheme);
+document.addEventListener("DOMContentLoaded", function () {
+  const authThemeToggle = document.getElementById("authThemeToggle");
+  if (authThemeToggle) authThemeToggle.addEventListener("click", toggleTheme);
+});
 
 // ── QR Scanner ────────────────────────────────────────────
 function beep() {

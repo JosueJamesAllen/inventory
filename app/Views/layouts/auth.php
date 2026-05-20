@@ -21,6 +21,10 @@
 
     <?= $content ?>
 
+    <button class="auth-theme-btn" id="authThemeToggle" title="Toggle dark mode">
+      <span id="authThemeIcon">🌙</span>
+    </button>
+
 </body>
 
 </html>
