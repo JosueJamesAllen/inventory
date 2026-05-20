@@ -120,7 +120,7 @@
             <span>Scan Employee ID Card</span>
           </div>
           <div class="video-wrap">
-            <video id="return-video-emp" aautoplay playsinline muted webkit-playsinline></video>
+            <video id="return-video-emp" autoplay playsinline muted webkit-playsinline></video>
             <div class="scan-line" id="return-line-emp"></div>
             <canvas id="return-canvas-emp" hidden></canvas>
           </div>
