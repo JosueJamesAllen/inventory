@@ -288,6 +288,7 @@ function initScanner(prefix) {
         const empVal   = empInput.value;
         if (step3El) {
           step3El.style.display = "block";
+          step3El.classList.remove("scan-step-locked");
           step3El.classList.add("unlocked");
           if (step3Num) { step3Num.classList.add("active"); }
           if (summary) {
