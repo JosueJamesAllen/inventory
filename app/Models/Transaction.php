@@ -6,11 +6,11 @@ class Transaction extends BaseModel
 {
     protected string $table = 'transactions';
 
-    public function borrow(int $deviceId, int $borrowerId, ?int $facilitatedBy = null): int
+    public function borrow(int $deviceId, int $borrowerId, ?int $facilitatedBy = null, ?string $purpose = null, ?string $expectedReturnAt = null): int
     {
         return $this->insertGetId(
-            "INSERT INTO transactions (device_id, borrower_id, facilitated_by) VALUES (?, ?, ?)",
-            [$deviceId, $borrowerId, $facilitatedBy]
+            "INSERT INTO transactions (device_id, borrower_id, facilitated_by, purpose, expected_return_at) VALUES (?, ?, ?, ?, ?)",
+            [$deviceId, $borrowerId, $facilitatedBy, $purpose ?: null, $expectedReturnAt ?: null]
         );
     }
 
@@ -33,18 +33,21 @@ class Transaction extends BaseModel
     public function activeBorrows(): array
     {
         return $this->query("
-            SELECT t.*,
-                   d.name AS device_name, d.asset_tag, d.type AS device_type,
+            SELECT d.name AS device_name, d.asset_tag, d.type AS device_type,
                    d.cabinet, d.shelf,
+                   t.id, t.borrowed_at, t.facilitated_by,
+                   t.purpose, t.expected_return_at,
                    e1.name AS borrower_name, e1.department,
                    e2.name AS facilitated_by_name,
-                   ROUND(TIMESTAMPDIFF(MINUTE, t.borrowed_at, NOW()) / 60, 1) AS hours_ago
-            FROM transactions t
-            JOIN devices   d  ON t.device_id      = d.id
-            JOIN employees e1 ON t.borrower_id    = e1.id
-            LEFT JOIN employees e2 ON t.facilitated_by = e2.id
-            WHERE t.returned_at IS NULL
-            ORDER BY t.borrowed_at DESC
+                   CASE WHEN t.borrowed_at IS NOT NULL
+                        THEN ROUND(TIMESTAMPDIFF(MINUTE, t.borrowed_at, NOW()) / 60, 1)
+                        ELSE NULL END AS hours_ago
+            FROM devices d
+            LEFT JOIN transactions t  ON t.device_id = d.id AND t.returned_at IS NULL
+            LEFT JOIN employees    e1 ON t.borrower_id     = e1.id
+            LEFT JOIN employees    e2 ON t.facilitated_by  = e2.id
+            WHERE d.status = 'borrowed'
+            ORDER BY t.borrowed_at IS NULL, t.borrowed_at DESC
         ");
     }
 
@@ -92,6 +95,43 @@ class Transaction extends BaseModel
             "UPDATE transactions SET returned_at = NOW(), notes = ? WHERE device_id = ? AND returned_at IS NULL",
             [$note, $deviceId]
         );
+    }
+
+    public function historyByDevice(int $deviceId): array
+    {
+        return $this->query("
+            SELECT t.id, t.borrowed_at, t.returned_at, t.purpose, t.expected_return_at, t.notes,
+                   e1.name AS borrower_name, e1.department,
+                   e2.name AS facilitated_by_name,
+                   e3.name AS returned_by_name
+            FROM transactions t
+            JOIN employees e1 ON t.borrower_id    = e1.id
+            LEFT JOIN employees e2 ON t.facilitated_by = e2.id
+            LEFT JOIN employees e3 ON t.returned_by    = e3.id
+            WHERE t.device_id = ?
+            ORDER BY t.id DESC
+        ", [$deviceId]);
+    }
+
+    public function countOverdue(): int
+    {
+        return $this->count("
+            SELECT COUNT(*) FROM transactions
+            WHERE returned_at IS NULL
+              AND expected_return_at IS NOT NULL
+              AND expected_return_at < CURDATE()
+        ");
+    }
+
+    public function weeklyActivity(): array
+    {
+        return $this->query("
+            SELECT DATE(borrowed_at) AS day, COUNT(*) AS count
+            FROM transactions
+            WHERE borrowed_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+            GROUP BY DATE(borrowed_at)
+            ORDER BY day
+        ");
     }
 
     // CSV export rows

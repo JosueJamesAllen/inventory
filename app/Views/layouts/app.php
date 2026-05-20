@@ -11,11 +11,26 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= '//' . $_SERVER['HTTP_HOST'] . '/inventory/public/css/app.css' ?>">
 </head>
 
 <body>
+
+  <!-- ── Mobile top bar ── -->
+  <header class="mobile-topbar">
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+    <span class="mobile-topbar-title">IT Inventory</span>
+    <button class="btn-theme-icon" id="themeToggleMobile" title="Toggle dark mode">
+      <span id="themeIconMobile">🌙</span>
+    </button>
+  </header>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
   <div class="app-layout">
 
@@ -80,6 +95,16 @@
 
     <!-- ── Main ── -->
     <main class="main-content">
+      <div class="agency-brand">
+        <img src="/inventory/public/img/Philippine_Statistics_Authority.svg.png"
+             alt="Philippine Statistics Authority"
+             class="agency-logo">
+        <div class="agency-text">
+          <span class="agency-name">Philippine Statistics Authority</span>
+          <span class="agency-unit">Marinduque Provincial Statistics Office</span>
+        </div>
+      </div>
+
       <?php if ($flash): ?>
         <div class="flash flash-<?= htmlspecialchars($flash['type']) ?>">
           <?= $flash['message'] ?>
@@ -93,6 +118,26 @@
   </div>
 
   <script src="/inventory/public/js/app.js"></script>
+
+  <div id="konami-overlay" style="display:none">
+    <div class="konami-inner">
+      <div class="konami-name">axellexious</div>
+      <div class="konami-name">drrnie<span class="konami-cursor"></span></div>
+      <div class="konami-body">
+        built an inventory system<br>
+        for the government.<br>
+        <br>
+        it knows where the laptops are.
+      </div>
+      <div class="konami-org">
+        Philippine Statistics Authority<br>
+        Marinduque Provincial Statistics Office<br>
+        2025
+      </div>
+      <div class="konami-dismiss">click anywhere · esc to close</div>
+    </div>
+  </div>
+
 </body>
 
 </html>

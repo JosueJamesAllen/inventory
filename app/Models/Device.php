@@ -26,7 +26,10 @@ class Device extends BaseModel
 
     public function findByQr(string $qrCode): ?array
     {
-        return $this->queryOne("SELECT * FROM devices WHERE qr_code = ?", [$qrCode]);
+        return $this->queryOne(
+            "SELECT * FROM devices WHERE qr_code = ? OR asset_tag = ?",
+            [$qrCode, $qrCode]
+        );
     }
 
     public function findByAssetTag(string $tag): ?array

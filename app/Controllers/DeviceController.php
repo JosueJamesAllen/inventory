@@ -54,17 +54,76 @@ class DeviceController extends BaseController
 
         $id = (int)$this->request->post('device_id');
 
+        $newStatus = $this->request->post('status');
+
+        if ($newStatus === 'available') {
+            (new Transaction())->closeByDevice($id, 'Status set to available via device edit.');
+        }
+
         (new Device())->update($id, [
             'name'    => $this->request->post('name'),
             'type'    => $this->request->post('type'),
             'cabinet' => $this->request->post('cabinet'),
             'shelf'   => $this->request->post('shelf'),
-            'status'  => $this->request->post('status'),
+            'status'  => $newStatus,
             'notes'   => $this->request->post('notes'),
         ]);
 
         Session::flash('success', 'Device updated successfully.');
         Response::redirect('/devices');
+    }
+
+    public function bulkUpdate(): void
+    {
+        RoleMiddleware::require('admin', 'it_staff');
+        $this->request->verifyCsrf();
+
+        $ids       = array_filter(array_map('intval', (array)($_POST['device_ids'] ?? [])));
+        $newStatus = $this->request->post('bulk_status');
+        $allowed   = ['available', 'borrowed', 'out_of_service'];
+
+        if (empty($ids) || !in_array($newStatus, $allowed)) {
+            Session::flash('error', 'Invalid bulk update request.');
+            Response::redirect('/devices');
+        }
+
+        $deviceModel = new Device();
+        $txModel     = new Transaction();
+
+        foreach ($ids as $id) {
+            if ($newStatus === 'available') {
+                $txModel->closeByDevice($id, 'Bulk status update to available.');
+            }
+            $deviceModel->setStatus($id, $newStatus);
+        }
+
+        $label = str_replace('_', ' ', $newStatus);
+        Session::flash('success', count($ids) . ' device(s) set to <strong>' . $label . '</strong>.');
+        Response::redirect('/devices');
+    }
+
+    public function history(): void
+    {
+        AuthMiddleware::handle();
+
+        $id      = (int)($_GET['id'] ?? 0);
+        $device  = (new Device())->findById($id);
+
+        if (!$device) {
+            Response::json(['error' => 'Device not found'], 404);
+        }
+
+        $rows = (new Transaction())->historyByDevice($id);
+
+        Response::json([
+            'device' => [
+                'name'       => $device['name'],
+                'asset_tag'  => $device['asset_tag'],
+                'type'       => $device['type'],
+                'status'     => $device['status'],
+            ],
+            'history' => $rows,
+        ]);
     }
 
     public function reconcile(): void

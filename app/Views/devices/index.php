@@ -5,9 +5,13 @@
     <h1>Devices</h1>
     <p class="page-sub">All IT equipment · <?= count($devices) ?> total</p>
   </div>
-  <?php if ($canEdit): ?>
-  <button class="btn btn-primary" onclick="openModal('modal-add-device')">+ Add Device</button>
-  <?php endif; ?>
+  <div class="btn-group">
+    <button class="btn btn-outline" onclick="printDeviceQrs()">Print QR Codes</button>
+    <button class="btn btn-outline" onclick="downloadDeviceQrPdf()">Download PDF</button>
+    <?php if ($canEdit): ?>
+    <button class="btn btn-primary" onclick="openModal('modal-add-device')">+ Add Device</button>
+    <?php endif; ?>
+  </div>
 </div>
 
 <!-- Filters -->
@@ -34,6 +38,7 @@
   <table id="devicesTable">
     <thead>
       <tr>
+        <?php if ($canEdit): ?><th style="width:2rem"><input type="checkbox" id="bulk-select-all" title="Select all" onchange="bulkToggleAll(this)"></th><?php endif; ?>
         <th>Device</th>
         <th>Type</th>
         <th>Asset Tag</th>
@@ -41,7 +46,7 @@
         <th>Location</th>
         <th>Status</th>
         <th>Current Borrower</th>
-        <?php if ($canEdit): ?><th>Actions</th><?php endif; ?>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -49,6 +54,9 @@
     <tr data-status="<?= htmlspecialchars($d['status']) ?>"
         data-type="<?= htmlspecialchars(strtolower($d['type'])) ?>"
         data-search="<?= htmlspecialchars(strtolower($d['name'] . ' ' . $d['asset_tag'] . ' ' . $d['type'])) ?>">
+      <?php if ($canEdit): ?>
+      <td><input type="checkbox" class="bulk-cb" value="<?= (int)$d['id'] ?>" onchange="bulkUpdateBar()"></td>
+      <?php endif; ?>
       <td>
         <strong><?= htmlspecialchars($d['name']) ?></strong>
         <?php if ($d['notes']): ?>
@@ -65,14 +73,16 @@
             ? htmlspecialchars($d['current_borrower'])
             : '<span class="text-muted">—</span>' ?>
       </td>
-      <?php if ($canEdit): ?>
       <td class="actions-cell">
+        <button class="btn btn-xs btn-outline"
+          onclick='openDeviceHistory(<?= (int)$d["id"] ?>)'>History</button>
+        <?php if ($canEdit): ?>
         <button class="btn btn-xs btn-outline"
           onclick='openEditDevice(<?= json_encode($d) ?>)'>Edit</button>
         <button class="btn btn-xs btn-warn"
           onclick='openReconcile(<?= (int)$d["id"] ?>, <?= json_encode($d["name"]) ?>, <?= json_encode($d["status"]) ?>)'>Reconcile</button>
+        <?php endif; ?>
       </td>
-      <?php endif; ?>
     </tr>
     <?php endforeach; ?>
     </tbody>
@@ -161,7 +171,6 @@
           <label>Status *</label>
           <select name="status" id="edit-device-status">
             <option value="available">Available</option>
-            <option value="borrowed">Borrowed</option>
             <option value="out_of_service">Out of Service</option>
           </select>
         </div>
@@ -218,3 +227,202 @@
 </div>
 
 <?php endif; ?>
+
+<?php if ($canEdit): ?>
+<!-- ── Bulk action bar ── -->
+<form id="bulk-form" method="POST" action="/inventory/public/devices/bulk">
+  <?= $csrf ?>
+  <input type="hidden" name="bulk_status" id="bulk-status-input">
+  <div id="bulk-bar" class="bulk-bar">
+    <span id="bulk-count" class="bulk-bar-count">0 selected</span>
+    <div class="bulk-bar-actions">
+      <select id="bulk-status-select" class="bulk-bar-select">
+        <option value="">Set status to…</option>
+        <option value="available">Available</option>
+        <option value="out_of_service">Out of Service</option>
+      </select>
+      <button type="button" class="btn btn-primary btn-sm" onclick="bulkSubmit()">Apply</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="bulkClear()">Cancel</button>
+    </div>
+  </div>
+</form>
+<?php endif; ?>
+
+<!-- ── Modal: Device History ── -->
+<div id="modal-device-history" class="modal-overlay" style="display:none">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div>
+        <h3 id="history-device-name">Device History</h3>
+        <p id="history-device-meta" class="modal-desc" style="margin:0"></p>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-device-history')">✕</button>
+    </div>
+    <div id="history-body" class="history-timeline">
+      <div class="history-loading">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function bulkUpdateBar() {
+  const checked = document.querySelectorAll('.bulk-cb:checked');
+  const bar     = document.getElementById('bulk-bar');
+  const count   = document.getElementById('bulk-count');
+  if (!bar) return;
+  count.textContent = checked.length + ' device' + (checked.length !== 1 ? 's' : '') + ' selected';
+  bar.classList.toggle('bulk-bar-visible', checked.length > 0);
+  document.getElementById('bulk-select-all').indeterminate =
+    checked.length > 0 && checked.length < document.querySelectorAll('.bulk-cb').length;
+}
+
+function bulkToggleAll(master) {
+  document.querySelectorAll('.bulk-cb').forEach(cb => {
+    const row = cb.closest('tr');
+    if (!row || row.style.display === 'none') return;
+    cb.checked = master.checked;
+  });
+  bulkUpdateBar();
+}
+
+function bulkClear() {
+  document.querySelectorAll('.bulk-cb, #bulk-select-all').forEach(cb => cb.checked = false);
+  const bar = document.getElementById('bulk-bar');
+  if (bar) bar.classList.remove('bulk-bar-visible');
+}
+
+function bulkSubmit() {
+  const status = document.getElementById('bulk-status-select').value;
+  if (!status) { alert('Please choose a status to apply.'); return; }
+
+  const ids    = [...document.querySelectorAll('.bulk-cb:checked')].map(cb => cb.value);
+  if (!ids.length) return;
+
+  const label  = status.replace('_', ' ');
+  if (!confirm(`Set ${ids.length} device(s) to "${label}"?`)) return;
+
+  document.getElementById('bulk-status-input').value = status;
+
+  const form = document.getElementById('bulk-form');
+  document.querySelectorAll('input[name="device_ids[]"]').forEach(el => el.remove());
+  ids.forEach(id => {
+    const inp = document.createElement('input');
+    inp.type  = 'hidden';
+    inp.name  = 'device_ids[]';
+    inp.value = id;
+    form.appendChild(inp);
+  });
+  form.submit();
+}
+
+function collectDeviceQrItems() {
+  const rows  = document.querySelectorAll('#devicesTable tbody tr');
+  const items = [];
+  rows.forEach(row => {
+    if (row.style.display === 'none') return;
+    const cells  = row.querySelectorAll('td');
+    const hasCb  = cells[0].querySelector('input[type="checkbox"]');
+    const offset = hasCb ? 1 : 0;
+    const name     = cells[offset].querySelector('strong')?.textContent.trim() || '';
+    const assetTag = cells[offset + 2].textContent.trim();
+    const qrCode   = cells[offset + 3].textContent.trim();
+    if (qrCode) items.push({ name, sub: assetTag, qr: qrCode });
+  });
+  return items;
+}
+
+function printDeviceQrs() {
+  const items = collectDeviceQrItems();
+  if (!items.length) { alert('No devices to print.'); return; }
+  openQrPrintWindow(items, 'Devices');
+}
+
+function downloadDeviceQrPdf() {
+  const items = collectDeviceQrItems();
+  if (!items.length) { alert('No devices found.'); return; }
+  downloadQrPdf(items, 'Devices');
+}
+
+function openDeviceHistory(id) {
+  document.getElementById('history-device-name').textContent = 'Device History';
+  document.getElementById('history-device-meta').textContent = '';
+  document.getElementById('history-body').innerHTML = '<div class="history-loading">Loading…</div>';
+  openModal('modal-device-history');
+
+  fetch('/inventory/public/devices/history?id=' + id)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        document.getElementById('history-body').innerHTML = '<p class="text-muted" style="padding:1rem">Error loading history.</p>';
+        return;
+      }
+
+      const d = data.device;
+      document.getElementById('history-device-name').textContent = d.name;
+      document.getElementById('history-device-meta').textContent = d.type + ' · ' + d.asset_tag;
+
+      const rows = data.history;
+      if (!rows.length) {
+        document.getElementById('history-body').innerHTML =
+          '<p class="text-muted" style="padding:1rem;text-align:center">No transactions recorded for this device yet.</p>';
+        return;
+      }
+
+      const html = rows.map(r => {
+        const active  = !r.returned_at;
+        const badge   = active
+          ? '<span class="status-badge status-borrowed">Active</span>'
+          : '<span class="status-badge status-available">Returned</span>';
+        const borrowed  = formatDate(r.borrowed_at);
+        const returned  = r.returned_at ? formatDate(r.returned_at) : '—';
+        const via       = r.facilitated_by_name ? 'via ' + escHtml(r.facilitated_by_name) : 'Self-serve';
+        const retBy     = r.returned_by_name ? 'Returned by ' + escHtml(r.returned_by_name) : (r.returned_at ? 'Self-serve' : '');
+        const dueStr    = r.expected_return_at
+          ? (() => { const d = new Date(r.expected_return_at); return d.toLocaleDateString('en-PH', {month:'short',day:'numeric',year:'numeric'}); })()
+          : 'Indefinite';
+        const isOverdue = !r.returned_at && r.expected_return_at && new Date(r.expected_return_at) < new Date();
+        const dueBadge  = `<span style="font-size:.75rem;color:${isOverdue ? 'var(--error)' : 'var(--text2)'}">Due: ${dueStr}${isOverdue ? ' ⚠' : ''}</span>`;
+
+        return `
+          <div class="history-entry ${active ? 'history-active' : ''}">
+            <div class="history-dot ${active ? 'history-dot-active' : ''}"></div>
+            <div class="history-content">
+              <div class="history-row-top">
+                <strong>${escHtml(r.borrower_name)}</strong>
+                <span class="text-muted" style="font-size:.78rem">${escHtml(r.department)}</span>
+                ${badge}
+              </div>
+              ${r.purpose ? `<div style="font-size:.8rem;margin:.15rem 0 .35rem;color:var(--text)">Purpose: <em>${escHtml(r.purpose)}</em></div>` : ''}
+              <div class="history-row-dates">
+                <span>Borrowed: <b>${borrowed}</b></span>
+                <span>Returned: <b>${returned}</b></span>
+                ${dueBadge}
+              </div>
+              <div class="history-row-meta">
+                <span class="text-muted">${via}</span>
+                ${retBy ? '<span class="text-muted">' + retBy + '</span>' : ''}
+                ${r.notes ? '<span class="text-muted">Note: ' + escHtml(r.notes) + '</span>' : ''}
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+      document.getElementById('history-body').innerHTML = html;
+    })
+    .catch(() => {
+      document.getElementById('history-body').innerHTML =
+        '<p class="text-muted" style="padding:1rem">Failed to load history.</p>';
+    });
+}
+
+function formatDate(str) {
+  if (!str) return '—';
+  const d = new Date(str.replace(' ', 'T'));
+  return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
+       + ' ' + d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>

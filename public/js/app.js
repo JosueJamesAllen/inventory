@@ -83,9 +83,33 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
+// ── Mobile sidebar ────────────────────────────────────────
+const sidebar = document.getElementById("sidebar");
+const sidebarOverlay = document.getElementById("sidebarOverlay");
+const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+
+function openSidebar() {
+  sidebar.classList.add("sidebar-open");
+  sidebarOverlay.classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+function closeSidebar() {
+  sidebar.classList.remove("sidebar-open");
+  sidebarOverlay.classList.remove("active");
+  document.body.style.overflow = "";
+}
+
+if (mobileMenuBtn) mobileMenuBtn.addEventListener("click", openSidebar);
+if (sidebarOverlay) sidebarOverlay.addEventListener("click", closeSidebar);
+document.querySelectorAll(".nav-item").forEach((item) => {
+  item.addEventListener("click", closeSidebar);
+});
+
 // ── Dark mode ─────────────────────────────────────────────
 const themeToggle = document.getElementById("themeToggle");
 const themeIcon = document.getElementById("themeIcon");
+const themeToggleMobile = document.getElementById("themeToggleMobile");
+const themeIconMobile = document.getElementById("themeIconMobile");
 
 function getTheme() {
   try {
@@ -99,20 +123,28 @@ function setTheme(theme) {
   try {
     localStorage.setItem("theme", theme);
   } catch (e) {}
-  if (themeIcon) themeIcon.textContent = theme === "dark" ? "☀️" : "🌙";
+  const icon = theme === "dark" ? "☀️" : "🌙";
+  if (themeIcon) themeIcon.textContent = icon;
+  if (themeIconMobile) themeIconMobile.textContent = icon;
+  const authThemeIcon = document.getElementById("authThemeIcon");
+  if (authThemeIcon) authThemeIcon.textContent = icon;
 }
 
 setTheme(getTheme());
 
-if (themeToggle) {
-  themeToggle.addEventListener("click", function () {
-    setTheme(
-      document.documentElement.getAttribute("data-theme") === "dark"
-        ? "light"
-        : "dark",
-    );
-  });
+function toggleTheme() {
+  setTheme(
+    document.documentElement.getAttribute("data-theme") === "dark"
+      ? "light"
+      : "dark",
+  );
 }
+if (themeToggle) themeToggle.addEventListener("click", toggleTheme);
+if (themeToggleMobile) themeToggleMobile.addEventListener("click", toggleTheme);
+document.addEventListener("DOMContentLoaded", function () {
+  const authThemeToggle = document.getElementById("authThemeToggle");
+  if (authThemeToggle) authThemeToggle.addEventListener("click", toggleTheme);
+});
 
 // ── QR Scanner ────────────────────────────────────────────
 function beep() {
@@ -247,14 +279,29 @@ function initScanner(prefix) {
       step2Num.classList.add("done");
       step2Num.textContent = "✓";
       setFeedback(`${prefix}-feedback-dev`, "✅", code, "feedback-success");
-      setFeedback(
-        `${prefix}-feedback-emp`,
-        "⏳",
-        "Submitting...",
-        "feedback-submitting",
-      );
 
-      setTimeout(() => form.submit(), 600);
+      // Step 3 — show borrow details form (borrow only; return still auto-submits)
+      if (prefix === "borrow") {
+        const step3El  = document.getElementById("borrow-step3");
+        const step3Num = document.getElementById("borrow-step3-num");
+        const summary  = document.getElementById("borrow-confirm-summary");
+        const empVal   = empInput.value;
+        if (step3El) {
+          step3El.style.display = "block";
+          step3El.classList.remove("scan-step-locked");
+          step3El.classList.add("unlocked");
+          if (step3Num) { step3Num.classList.add("active"); }
+          if (summary) {
+            summary.innerHTML =
+              `<span class="confirm-chip">👤 ${empVal}</span>` +
+              `<span class="confirm-chip">💻 ${code}</span>`;
+          }
+          document.getElementById("borrow-purpose")?.focus();
+        }
+      } else {
+        setFeedback(`${prefix}-feedback-emp`, "⏳", "Submitting...", "feedback-submitting");
+        setTimeout(() => form.submit(), 600);
+      }
     });
   });
 }
@@ -284,8 +331,154 @@ function resetScanner(prefix) {
   const resetBtn = document.getElementById(`${prefix}-reset`);
   if (resetBtn) resetBtn.style.display = "none";
 
+  // Reset step 3 if borrow
+  if (prefix === "borrow") {
+    const step3El = document.getElementById("borrow-step3");
+    const step3Num = document.getElementById("borrow-step3-num");
+    if (step3El) { step3El.style.display = "none"; step3El.classList.remove("unlocked"); }
+    if (step3Num) { step3Num.classList.remove("active", "done"); step3Num.textContent = "3"; }
+    const purposeInput = document.getElementById("borrow-purpose");
+    const dateInput    = document.getElementById("borrow-return-date");
+    const cbInput      = document.getElementById("borrow-indefinite");
+    if (purposeInput) purposeInput.value = "";
+    if (dateInput)    { dateInput.value = ""; dateInput.disabled = false; }
+    if (cbInput)      cbInput.checked = false;
+  }
+
   // Restart step 1 camera
   initScanner(prefix);
+}
+
+// ── Script loader helper ──────────────────────────────────
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+// ── QR Code PDF download ──────────────────────────────────
+async function downloadQrPdf(items, title) {
+  try {
+    await Promise.all([
+      loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'),
+      loadScript('https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'),
+    ]);
+  } catch {
+    alert('Could not load PDF library. Check your internet connection.');
+    return;
+  }
+
+  // Generate QR data URLs via qrcodejs canvas
+  const qrUrls = items.map(item => {
+    const div = document.createElement('div');
+    div.style.cssText = 'position:absolute;left:-9999px;';
+    document.body.appendChild(div);
+    new QRCode(div, { text: item.qr, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.M });
+    const canvas = div.querySelector('canvas');
+    const url = canvas ? canvas.toDataURL('image/png') : null;
+    document.body.removeChild(div);
+    return url;
+  });
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const cols   = 9;
+  const mX     = 8, mY = 8, gX = 2, gY = 3;
+  const cardW  = (210 - mX * 2 - gX * (cols - 1)) / cols;
+  const qrSize = cardW - 2;
+  const cardH  = qrSize + 9;
+  const rows   = Math.floor((297 - mY * 2) / (cardH + gY));
+  const perPg  = cols * rows;
+
+  items.forEach((item, i) => {
+    if (i > 0 && i % perPg === 0) doc.addPage();
+    const idx = i % perPg;
+    const x = mX + (idx % cols) * (cardW + gX);
+    const y = mY + Math.floor(idx / cols) * (cardH + gY);
+
+    doc.setDrawColor(210, 210, 210);
+    doc.setLineWidth(0.2);
+    doc.rect(x, y, cardW, cardH);
+
+    if (qrUrls[i]) doc.addImage(qrUrls[i], 'PNG', x + 1, y + 1, qrSize, qrSize);
+
+    doc.setFontSize(5.5);
+    doc.setTextColor(30, 30, 30);
+    doc.text(item.name, x + cardW / 2, y + qrSize + 4.5, { align: 'center', maxWidth: cardW - 2 });
+
+    if (item.sub) {
+      doc.setFontSize(4.5);
+      doc.setTextColor(110, 110, 110);
+      doc.text(item.sub, x + cardW / 2, y + qrSize + 7.5, { align: 'center', maxWidth: cardW - 2 });
+    }
+  });
+
+  doc.save(`${title.replace(/\s+/g, '-')}-QR-Codes.pdf`);
+}
+
+// ── QR Code print window ─────────────────────────────────
+function openQrPrintWindow(items, title) {
+  const cards = items.map(item => `
+    <div class="qr-card">
+      <div class="qr-wrap" data-qr="${item.qr.replace(/"/g, '&quot;')}"></div>
+      <div class="qr-name">${item.name.replace(/</g,'&lt;')}</div>
+      ${item.sub ? `<div class="qr-sub">${item.sub.replace(/</g,'&lt;')}</div>` : ''}
+    </div>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${title} — QR Codes</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Montserrat", Arial, sans-serif; background: #fff; color: #111; }
+    .toolbar { display: flex; align-items: center; gap: 1rem; padding: .75rem 1.25rem;
+               border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+    .toolbar h2 { font-size: 1rem; font-weight: 700; flex: 1; }
+    .toolbar button { padding: .45rem 1rem; border-radius: 7px; border: 1px solid #cbd5e1;
+                      font-size: .85rem; cursor: pointer; font-weight: 600; }
+    .toolbar .btn-print { background: #0f4c81; color: #fff; border-color: #0f4c81; }
+    .qr-grid { display: grid; grid-template-columns: repeat(6, 1fr);
+               gap: .35rem; padding: .5rem; }
+    .qr-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: .3rem .25rem;
+               text-align: center; break-inside: avoid; }
+    .qr-wrap { display: flex; justify-content: center; margin-bottom: .2rem; }
+    .qr-wrap canvas, .qr-wrap img { max-width: 100%; height: auto; }
+    .qr-name { font-size: .65rem; font-weight: 700; line-height: 1.2; }
+    .qr-sub  { font-size: .58rem; color: #64748b; margin-top: .1rem; }
+    @media print {
+      .toolbar { display: none; }
+      .qr-grid { gap: .6rem; padding: .5rem; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+    @media (max-width: 600px) { .qr-grid { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <h2>${title} — QR Codes (${items.length})</h2>
+    <button class="btn-print" onclick="window.print()">Print</button>
+    <button onclick="window.close()">Close</button>
+  </div>
+  <div class="qr-grid">${cards}</div>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>
+  <script>
+    document.querySelectorAll('.qr-wrap[data-qr]').forEach(function(el) {
+      new QRCode(el, { text: el.dataset.qr, width: 80, height: 80,
+                       correctLevel: QRCode.CorrectLevel.M });
+    });
+  <\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write(html);
+  win.document.close();
 }
 
 // ── Scan page type selector ───────────────────────────────
@@ -300,6 +493,13 @@ function selectType(type) {
   setTimeout(() => initScanner(type), 100);
 }
 
+function toggleIndefinite(cb) {
+  const dateInput = document.getElementById("borrow-return-date");
+  if (!dateInput) return;
+  dateInput.disabled = cb.checked;
+  if (cb.checked) dateInput.value = "";
+}
+
 function goBack() {
   if (activeScannerPrefix) {
     stopCamera(document.getElementById(activeScannerPrefix + "-video-emp"));
@@ -310,3 +510,29 @@ function goBack() {
   document.getElementById("section-return").style.display = "none";
   document.getElementById("type-prompt").style.display = "block";
 }
+
+// ── Konami code easter egg ─────────────────────────────────
+(function () {
+  const seq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  let pos = 0;
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      const el = document.getElementById('konami-overlay');
+      if (el) el.style.display = 'none';
+    }
+    pos = (e.key === seq[pos]) ? pos + 1 : (e.key === seq[0] ? 1 : 0);
+    if (pos === seq.length) {
+      pos = 0;
+      const el = document.getElementById('konami-overlay');
+      if (el) {
+        el.style.animation = 'none';
+        el.offsetWidth;
+        el.style.animation = '';
+        el.style.display = 'flex';
+      }
+    }
+  });
+  document.getElementById('konami-overlay')?.addEventListener('click', function () {
+    this.style.display = 'none';
+  });
+})();

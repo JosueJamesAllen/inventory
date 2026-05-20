@@ -87,6 +87,34 @@
           <input type="hidden" name="dev_qr" id="borrow-dev-qr">
         </div>
 
+        <!-- Step 3 — Borrow details -->
+        <div class="scan-step scan-step-locked" id="borrow-step3" style="display:none">
+          <div class="step-label">
+            <span class="step-num" id="borrow-step3-num">3</span>
+            <span>Borrow Details</span>
+          </div>
+          <div class="borrow-confirm-summary" id="borrow-confirm-summary"></div>
+          <div class="form-group" style="margin-top:1rem">
+            <label>Purpose of Borrowing</label>
+            <input type="text" name="purpose" id="borrow-purpose"
+              placeholder="e.g. Field work, meeting, repair…" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label>Expected Return Date</label>
+            <div class="indefinite-row">
+              <input type="date" name="expected_return_at" id="borrow-return-date"
+                min="<?= date('Y-m-d') ?>">
+              <label class="indefinite-check">
+                <input type="checkbox" id="borrow-indefinite" onchange="toggleIndefinite(this)">
+                Indefinite
+              </label>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" style="margin-top:1.25rem">
+            Confirm Borrow
+          </button>
+        </div>
+
         <button type="button" class="btn btn-outline btn-block btn-sm"
           id="borrow-reset" onclick="resetScanner('borrow')"
           style="margin-top:.75rem;display:none">↺ Reset</button>

@@ -2,12 +2,13 @@
   <div class="auth-card">
 
     <div class="auth-logo">
-      <svg width="42" height="42" viewBox="0 0 40 40" fill="none">
-        <rect width="40" height="40" rx="10" fill="#0F4C81"/>
-        <path d="M10 28V16l10-7 10 7v12H24v-7h-8v7z" fill="#fff"/>
-        <rect x="17" y="21" width="6" height="7" rx="1" fill="#38BDF8"/>
-      </svg>
-      <span>IT Inventory System</span>
+      <img src="/inventory/public/img/Philippine_Statistics_Authority.svg.png"
+           alt="PSA" class="auth-psa-logo">
+      <div class="auth-logo-text">
+        <span class="auth-logo-agency">Philippine Statistics Authority</span>
+        <span class="auth-logo-office">Marinduque Provincial Statistics Office</span>
+        <span class="auth-logo-system">IT Inventory System</span>
+      </div>
     </div>
 
     <h1>Sign In</h1>

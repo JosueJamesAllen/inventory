@@ -51,10 +51,12 @@ class ScanController extends BaseController
             Response::redirect('/scan');
         }
 
-        $currentUser  = Session::user();
+        $currentUser   = Session::user();
         $facilitatedBy = ($currentUser['id'] !== $borrower['id']) ? (int)$currentUser['id'] : null;
+        $purpose       = trim($this->request->post('purpose') ?? '');
+        $expectedReturn = $this->request->post('expected_return_at') ?: null;
 
-        (new Transaction())->borrow((int)$device['id'], (int)$borrower['id'], $facilitatedBy);
+        (new Transaction())->borrow((int)$device['id'], (int)$borrower['id'], $facilitatedBy, $purpose ?: null, $expectedReturn);
         $deviceModel->setStatus((int)$device['id'], 'borrowed');
 
         Session::flash('success', "&#10003; <strong>{$this->e($borrower['name'])}</strong> has borrowed <strong>{$this->e($device['name'])}</strong>.");
