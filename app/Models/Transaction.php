@@ -113,6 +113,16 @@ class Transaction extends BaseModel
         ", [$deviceId]);
     }
 
+    public function countOverdue(): int
+    {
+        return $this->count("
+            SELECT COUNT(*) FROM transactions
+            WHERE returned_at IS NULL
+              AND expected_return_at IS NOT NULL
+              AND expected_return_at < CURDATE()
+        ");
+    }
+
     public function weeklyActivity(): array
     {
         return $this->query("

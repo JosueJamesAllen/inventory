@@ -862,6 +862,12 @@ tr:hover td {
 .duration-warn {
   color: var(--amber);
 }
+tr.row-overdue td {
+  background: rgba(239, 68, 68, 0.06);
+}
+tr.row-overdue td:first-child {
+  border-left: 3px solid #ef4444;
+}
 
 /* ── Dashboard charts ── */
 .charts-grid {

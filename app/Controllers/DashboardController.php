@@ -25,6 +25,7 @@ class DashboardController extends BaseController
             'employeeCount' => $employee->total(),
             'todayCount'    => $transaction->countToday(),
             'activeBorrows'   => $transaction->activeBorrows(),
+            'overdueCount'    => $transaction->countOverdue(),
             'weeklyActivity'  => $transaction->weeklyActivity(),
         ]);
     }
