@@ -121,7 +121,8 @@
 
   <div id="konami-overlay" style="display:none">
     <div class="konami-inner">
-      <div class="konami-name">axellexious<span class="konami-cursor"></span></div>
+      <div class="konami-name">axellexious</div>
+      <div class="konami-name">drrnie<span class="konami-cursor"></span></div>
       <div class="konami-body">
         built an inventory system<br>
         for the government.<br>
