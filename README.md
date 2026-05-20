@@ -14,6 +14,7 @@ A locally hosted web application for tracking the borrowing and return of IT equ
 - [Project Structure](#project-structure)
 - [User Roles](#user-roles)
 - [How It Works](#how-it-works)
+- [Maintenance](#maintenance)
 - [Login](#login)
 - [Dark Mode](#dark-mode)
 - [Troubleshooting](#troubleshooting)
@@ -40,6 +41,7 @@ This system replaces manual logging with a fast, accurate QR-based process. Any 
 | **Overdue Flagging**           | Devices past their expected return date are highlighted in the dashboard and active borrows table |
 | **Proxy Return**               | Any staff member can return equipment on behalf of the original borrower                         |
 | **Designated Shelf Location**  | Every device has a permanent cabinet and shelf — displayed automatically on return               |
+| **Location Management**        | Add or remove cabinet and shelf combinations from the Maintenance page; device form uses dropdowns |
 | **Manual Reconciliation**      | IT staff can override device status during physical inventory, with reason and timestamp logged  |
 | **Equipment Audit Log**        | Full history per device — who borrowed it, for what purpose, who returned it, and when          |
 | **Employee Audit Log**         | Full borrowing history per employee across all devices                                           |
@@ -173,14 +175,16 @@ inventory/
 │   │   ├── ScanController.php
 │   │   ├── DeviceController.php
 │   │   ├── EmployeeController.php
-│   │   └── AuditController.php
+│   │   ├── AuditController.php
+│   │   └── MaintenanceController.php
 │   │
 │   ├── Models/              ← Database queries, one class per table
 │   │   ├── BaseModel.php
 │   │   ├── Employee.php
 │   │   ├── Device.php
 │   │   ├── Transaction.php
-│   │   └── Reconciliation.php
+│   │   ├── Reconciliation.php
+│   │   └── Location.php
 │   │
 │   ├── Views/               ← PHP templates, organised by page
 │   │   ├── layouts/
@@ -191,7 +195,8 @@ inventory/
 │   │   ├── scan/
 │   │   ├── devices/
 │   │   ├── employees/
-│   │   └── audit/
+│   │   ├── audit/
+│   │   └── maintenance/
 │   │
 │   └── Middleware/
 │       ├── AuthMiddleware.php
@@ -209,7 +214,8 @@ inventory/
 │   └── database.php         ← DB credentials
 │
 └── storage/
-    └── inventory.sql        ← Schema + seed data (import once)
+    ├── inventory.sql                  ← Schema + seed data (import once)
+    └── migration_add_locations.sql    ← Run on existing installs to add locations table
 ```
 
 > **Important:** Only the `public/` folder is served by Apache. All other folders — `app/`, `core/`, `config/`, `storage/` — are never directly accessible from the browser.
@@ -221,7 +227,7 @@ inventory/
 | Role         | Access                                                                                        |
 | ------------ | --------------------------------------------------------------------------------------------- |
 | **Admin**    | Full access — manages devices and employees, views all reports, exports data, sees QR codes   |
-| **IT Staff** | Facilitates borrow/return transactions, manages devices, views employee list (QR codes hidden) |
+| **IT Staff** | Facilitates borrow/return transactions, manages devices and locations, views employee list (QR codes hidden) |
 | **Borrower** | Can scan their own ID to borrow or return equipment independently                             |
 
 ---
@@ -254,6 +260,68 @@ Any device with an expected return date that has passed is automatically flagged
 IT staff can override a device's status at any time during a physical inventory check. Every override requires a written reason and is permanently logged with the staff member's name and timestamp. Use the **Reconcile** button on the Devices page.
 
 > **Note:** To mark a device as Borrowed, always use the Borrow / Return scan page. The Edit device form only allows switching between **Available** and **Out of Service** — this keeps transaction records accurate.
+
+---
+
+## Maintenance
+
+The **Maintenance** page (accessible to Admin and IT Staff) manages the list of valid storage locations — cabinet and shelf combinations — that appear as dropdowns when adding or editing a device.
+
+### Adding a Location
+
+1. Go to **Maintenance** in the sidebar
+2. Click **+ Add Location**
+3. Enter the cabinet name (e.g. `Cabinet A`) and shelf or section name (e.g. `Shelf 1`)
+4. Click **Add Location** — it appears in the table immediately and becomes available in the device form dropdowns
+
+### Removing a Location
+
+1. Go to **Maintenance**
+2. Find the location you want to remove — the **Devices Assigned** column shows how many devices currently use it
+3. If the count is zero, click **Remove** and confirm
+4. If the count is non-zero, the Remove button is disabled — reassign those devices to a different location first (via **Devices → Edit**), then return to Maintenance to remove it
+
+> **Note:** Removing a location does not affect device records — cabinet and shelf values are stored as plain text on each device. Removing a location only prevents it from appearing in the dropdown going forward.
+
+### First-Time Setup (existing installs only)
+
+If the app was already running before the Maintenance feature was added, run this once in phpMyAdmin → `inventory_db` → **SQL** tab:
+
+```sql
+CREATE TABLE IF NOT EXISTS locations (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    cabinet    VARCHAR(80) NOT NULL,
+    shelf      VARCHAR(80) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_location (cabinet, shelf)
+) ENGINE=InnoDB;
+
+INSERT IGNORE INTO locations (cabinet, shelf) VALUES
+('Cabinet A', 'Shelf 1'),
+('Cabinet A', 'Shelf 2'),
+('Cabinet A', 'Shelf 3'),
+('Cabinet B', 'Shelf 1'),
+('Cabinet B', 'Shelf 2'),
+('Cabinet C', 'Shelf 1'),
+('Cabinet C', 'Shelf 2'),
+('Cabinet C', 'Shelf 3'),
+('Cabinet 1', 'CBMS 1A'),
+('Cabinet 1', 'CBMS 1B'),
+('Cabinet 1', 'CBMS 1C'),
+('Cabinet 1', 'CBMS 1D'),
+('Cabinet 2', 'CBMS 2A'),
+('Cabinet 2', 'CBMS 2B');
+```
+
+This is also saved as `storage/migration_add_locations.sql` if you prefer to use the Import tab instead. Fresh installs using `storage/inventory.sql` get the table automatically.
+
+### Changing a Location Name
+
+There is no rename function. To rename a location (e.g. `Cabinet A` → `Storage Room 1`):
+
+1. Edit each device assigned to the old location and select the new one
+2. Once the old location's device count reaches zero, remove it from Maintenance
+3. Add the new location name if it does not already exist
 
 ---
 
