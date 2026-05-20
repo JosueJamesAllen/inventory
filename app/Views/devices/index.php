@@ -7,6 +7,7 @@
   </div>
   <div class="btn-group">
     <button class="btn btn-outline" onclick="printDeviceQrs()">Print QR Codes</button>
+    <button class="btn btn-outline" onclick="downloadDeviceQrPdf()">Download PDF</button>
     <?php if ($canEdit): ?>
     <button class="btn btn-primary" onclick="openModal('modal-add-device')">+ Add Device</button>
     <?php endif; ?>
@@ -314,23 +315,32 @@ function bulkSubmit() {
   form.submit();
 }
 
-function printDeviceQrs() {
+function collectDeviceQrItems() {
   const rows  = document.querySelectorAll('#devicesTable tbody tr');
   const items = [];
   rows.forEach(row => {
     if (row.style.display === 'none') return;
-    const cells = row.querySelectorAll('td');
-    // With checkbox col: cells[0]=cb, [1]=name, [2]=type, [3]=asset_tag, [4]=qr_code
-    // Without checkbox col (borrower): cells[0]=name, [1]=type, [2]=asset_tag, [3]=qr_code
-    const hasCb = cells[0].querySelector('input[type="checkbox"]');
+    const cells  = row.querySelectorAll('td');
+    const hasCb  = cells[0].querySelector('input[type="checkbox"]');
     const offset = hasCb ? 1 : 0;
     const name     = cells[offset].querySelector('strong')?.textContent.trim() || '';
     const assetTag = cells[offset + 2].textContent.trim();
     const qrCode   = cells[offset + 3].textContent.trim();
     if (qrCode) items.push({ name, sub: assetTag, qr: qrCode });
   });
+  return items;
+}
+
+function printDeviceQrs() {
+  const items = collectDeviceQrItems();
   if (!items.length) { alert('No devices to print.'); return; }
   openQrPrintWindow(items, 'Devices');
+}
+
+function downloadDeviceQrPdf() {
+  const items = collectDeviceQrItems();
+  if (!items.length) { alert('No devices found.'); return; }
+  downloadQrPdf(items, 'Devices');
 }
 
 function openDeviceHistory(id) {

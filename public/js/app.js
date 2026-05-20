@@ -349,6 +349,77 @@ function resetScanner(prefix) {
   initScanner(prefix);
 }
 
+// ── Script loader helper ──────────────────────────────────
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+// ── QR Code PDF download ──────────────────────────────────
+async function downloadQrPdf(items, title) {
+  try {
+    await Promise.all([
+      loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'),
+      loadScript('https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'),
+    ]);
+  } catch {
+    alert('Could not load PDF library. Check your internet connection.');
+    return;
+  }
+
+  // Generate QR data URLs via qrcodejs canvas
+  const qrUrls = items.map(item => {
+    const div = document.createElement('div');
+    div.style.cssText = 'position:absolute;left:-9999px;';
+    document.body.appendChild(div);
+    new QRCode(div, { text: item.qr, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.M });
+    const canvas = div.querySelector('canvas');
+    const url = canvas ? canvas.toDataURL('image/png') : null;
+    document.body.removeChild(div);
+    return url;
+  });
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const cols   = 9;
+  const mX     = 8, mY = 8, gX = 2, gY = 3;
+  const cardW  = (210 - mX * 2 - gX * (cols - 1)) / cols;
+  const qrSize = cardW - 2;
+  const cardH  = qrSize + 9;
+  const rows   = Math.floor((297 - mY * 2) / (cardH + gY));
+  const perPg  = cols * rows;
+
+  items.forEach((item, i) => {
+    if (i > 0 && i % perPg === 0) doc.addPage();
+    const idx = i % perPg;
+    const x = mX + (idx % cols) * (cardW + gX);
+    const y = mY + Math.floor(idx / cols) * (cardH + gY);
+
+    doc.setDrawColor(210, 210, 210);
+    doc.setLineWidth(0.2);
+    doc.rect(x, y, cardW, cardH);
+
+    if (qrUrls[i]) doc.addImage(qrUrls[i], 'PNG', x + 1, y + 1, qrSize, qrSize);
+
+    doc.setFontSize(5.5);
+    doc.setTextColor(30, 30, 30);
+    doc.text(item.name, x + cardW / 2, y + qrSize + 4.5, { align: 'center', maxWidth: cardW - 2 });
+
+    if (item.sub) {
+      doc.setFontSize(4.5);
+      doc.setTextColor(110, 110, 110);
+      doc.text(item.sub, x + cardW / 2, y + qrSize + 7.5, { align: 'center', maxWidth: cardW - 2 });
+    }
+  });
+
+  doc.save(`${title.replace(/\s+/g, '-')}-QR-Codes.pdf`);
+}
+
 // ── QR Code print window ─────────────────────────────────
 function openQrPrintWindow(items, title) {
   const cards = items.map(item => `
