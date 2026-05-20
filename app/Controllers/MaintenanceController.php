@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Middleware\AuthMiddleware;
 use App\Middleware\RoleMiddleware;
 use App\Models\Location;
 use Core\Response;
@@ -41,6 +42,12 @@ class MaintenanceController extends BaseController
         $model->create(['cabinet' => $cabinet, 'shelf' => $shelf]);
         Session::flash('success', "Location <strong>{$this->e($cabinet)} — {$this->e($shelf)}</strong> added.");
         Response::redirect('/maintenance');
+    }
+
+    public function locationsJson(): void
+    {
+        AuthMiddleware::handle();
+        Response::json((new Location())->grouped());
     }
 
     public function deleteLocation(): void

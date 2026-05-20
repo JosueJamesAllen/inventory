@@ -136,7 +136,7 @@
       <div class="konami-org">
         Philippine Statistics Authority<br>
         Marinduque Provincial Statistics Office<br>
-        2025
+        2026
       </div>
       <div class="konami-dismiss">click anywhere · esc to close</div>
     </div>

@@ -84,6 +84,7 @@ $router->get('/audit/export', 'AuditController@exportCsv');
 $router->get( '/maintenance',                    'MaintenanceController@index');
 $router->post('/maintenance/locations',          'MaintenanceController@storeLocation');
 $router->post('/maintenance/locations/delete',   'MaintenanceController@deleteLocation');
+$router->get( '/api/locations',                  'MaintenanceController@locationsJson');
 
 // ── Dispatch ──────────────────────────────────────────────
 $router->dispatch($request);

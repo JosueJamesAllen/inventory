@@ -9,7 +9,7 @@
     <button class="btn btn-outline" onclick="printDeviceQrs()">Print QR Codes</button>
     <button class="btn btn-outline" onclick="downloadDeviceQrPdf()">Download PDF</button>
     <?php if ($canEdit): ?>
-    <button class="btn btn-primary" onclick="openModal('modal-add-device')">+ Add Device</button>
+    <button class="btn btn-primary" onclick="openAddDeviceModal()">+ Add Device</button>
     <?php endif; ?>
   </div>
 </div>
@@ -30,6 +30,14 @@
     sort($types);
     foreach ($types as $t): ?>
     <option value="<?= htmlspecialchars($t) ?>"><?= htmlspecialchars($t) ?></option>
+    <?php endforeach; ?>
+  </select>
+  <select id="locationFilter" onchange="filterDevices()">
+    <option value="">All Locations</option>
+    <?php foreach ($locationsByGroup as $lcab => $shelves): ?>
+      <?php foreach ($shelves as $lshelf): ?>
+    <option value="<?= htmlspecialchars($lcab . '|' . $lshelf) ?>"><?= htmlspecialchars($lcab) ?> — <?= htmlspecialchars($lshelf) ?></option>
+      <?php endforeach; ?>
     <?php endforeach; ?>
   </select>
 </div>
@@ -53,6 +61,7 @@
     <?php foreach ($devices as $d): ?>
     <tr data-status="<?= htmlspecialchars($d['status']) ?>"
         data-type="<?= htmlspecialchars(strtolower($d['type'])) ?>"
+        data-location="<?= htmlspecialchars($d['cabinet'] . '|' . $d['shelf']) ?>"
         data-search="<?= htmlspecialchars(strtolower($d['name'] . ' ' . $d['asset_tag'] . ' ' . $d['type'])) ?>">
       <?php if ($canEdit): ?>
       <td><input type="checkbox" class="bulk-cb" value="<?= (int)$d['id'] ?>" onchange="bulkUpdateBar()"></td>
@@ -282,7 +291,29 @@
 </div>
 
 <script>
-const _locGroups = <?= json_encode($locationsByGroup) ?>;
+let _locGroups = <?= json_encode($locationsByGroup) ?>;
+
+async function refreshLocGroups() {
+  try {
+    const res = await fetch('/inventory/public/api/locations');
+    _locGroups = await res.json();
+  } catch(e) {}
+}
+
+async function openAddDeviceModal() {
+  await refreshLocGroups();
+  const cab = document.getElementById('add-device-cabinet');
+  const prev = cab ? cab.value : '';
+  cab.innerHTML = '<option value="">Select cabinet...</option>';
+  Object.keys(_locGroups).forEach(function(c) {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = c;
+    cab.appendChild(opt);
+  });
+  cab.value = prev;
+  updateShelfOptions('add');
+  openModal('modal-add-device');
+}
 
 function updateShelfOptions(prefix) {
   const cab      = document.getElementById(prefix + '-device-cabinet').value;

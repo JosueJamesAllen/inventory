@@ -23,7 +23,19 @@ document.addEventListener("keydown", function (e) {
 });
 
 // ── Device modals ─────────────────────────────────────────
-function openEditDevice(device) {
+async function openEditDevice(device) {
+  if (typeof refreshLocGroups === "function") {
+    await refreshLocGroups();
+    const cab = document.getElementById("edit-device-cabinet");
+    if (cab) {
+      cab.innerHTML = '<option value="">Select cabinet...</option>';
+      Object.keys(_locGroups).forEach(function(c) {
+        const opt = document.createElement("option");
+        opt.value = opt.textContent = c;
+        cab.appendChild(opt);
+      });
+    }
+  }
   document.getElementById("edit-device-id").value = device.id;
   document.getElementById("edit-device-name").value = device.name;
   document.getElementById("edit-device-type").value = device.type;
@@ -62,13 +74,16 @@ function filterDevices() {
   const type = (
     document.getElementById("typeFilter")?.value || ""
   ).toLowerCase();
+  const location = document.getElementById("locationFilter")?.value || "";
   document.querySelectorAll("#devicesTable tbody tr").forEach((row) => {
     const matchSearch =
       !search || (row.dataset.search || "").toLowerCase().includes(search);
     const matchStatus =
       !status || (row.dataset.status || "").toLowerCase() === status;
     const matchType = !type || (row.dataset.type || "").toLowerCase() === type;
-    row.style.display = matchSearch && matchStatus && matchType ? "" : "none";
+    const matchLocation = !location || (row.dataset.location || "") === location;
+    row.style.display =
+      matchSearch && matchStatus && matchType && matchLocation ? "" : "none";
   });
 }
 
