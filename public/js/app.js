@@ -610,3 +610,100 @@ function goBack() {
     }
   });
 })();
+
+// ── About this system ─────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+  const overlay = document.getElementById('about-overlay');
+  const btn     = document.getElementById('aboutBtn');
+  const close   = document.getElementById('aboutClose');
+  if (!overlay || !btn) return;
+
+  btn.addEventListener('click', function () {
+    overlay.style.animation = 'none';
+    overlay.offsetWidth;
+    overlay.style.animation = '';
+    overlay.style.display = 'flex';
+  });
+  close.addEventListener('click', function (e) {
+    e.stopPropagation();
+    overlay.style.display = 'none';
+  });
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) overlay.style.display = 'none';
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') overlay.style.display = 'none';
+  });
+});
+
+// ── Nav hover effects (sparkles / bubbles) ────────────────
+(function () {
+  const SPARKLE_CHARS   = ['✦', '✧', '⋆', '✶', '·', '✸', '✦', '⋆'];
+  const SPARKLE_COLORS  = ['#f0b8d8', '#C8A2C8', '#B6D0E2', '#f5d0e8', '#d4b0e0', '#a8d0e8'];
+  const BUBBLE_COLORS   = ['#bfdbfe', '#7dd3fc', '#93c5fd', '#a5f3fc', '#6ee7b7', '#e0f2fe'];
+
+  function spawnSparkles(navItem) {
+    const rect  = navItem.getBoundingClientRect();
+    const count = 6 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < count; i++) {
+      const el    = document.createElement('span');
+      el.className   = 'nav-sparkle';
+      el.textContent = SPARKLE_CHARS[Math.floor(Math.random() * SPARKLE_CHARS.length)];
+      const x = rect.left + Math.random() * rect.width;
+      const y = rect.top  + Math.random() * rect.height;
+      const delay = Math.random() * 220;
+      el.style.cssText = [
+        `left:${x}px`, `top:${y}px`,
+        `font-size:${0.55 + Math.random() * 0.6}rem`,
+        `color:${SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)]}`,
+        `animation-delay:${delay}ms`,
+        `--sdx:${(Math.random() - 0.5) * 52}px`,
+        `--sdy:${-(18 + Math.random() * 32)}px`,
+        `--srot:${(Math.random() - 0.5) * 180}deg`,
+      ].join(';');
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 700 + delay);
+    }
+  }
+
+  function spawnBubbles(navItem) {
+    const rect  = navItem.getBoundingClientRect();
+    const count = 4 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+      const el  = document.createElement('div');
+      el.className = 'nav-bubble';
+      const size  = 5 + Math.random() * 8;
+      const delay = Math.random() * 200;
+      el.style.cssText = [
+        `left:${rect.left + Math.random() * rect.width}px`,
+        `top:${rect.top  + Math.random() * rect.height}px`,
+        `width:${size}px`, `height:${size}px`,
+        `background:${BUBBLE_COLORS[Math.floor(Math.random() * BUBBLE_COLORS.length)]}`,
+        `animation-delay:${delay}ms`,
+        `--bdx:${(Math.random() - 0.5) * 32}px`,
+        `--bdy:${-(18 + Math.random() * 28)}px`,
+      ].join(';');
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 750 + delay);
+    }
+  }
+
+  function spawnForTheme(navItem) {
+    const theme = document.documentElement.getAttribute('data-theme');
+    if (theme === 'pastel') spawnSparkles(navItem);
+    else if (theme !== 'dark') spawnBubbles(navItem);
+  }
+
+  document.querySelectorAll('.nav-item').forEach(function (item) {
+    let timer = null;
+    item.addEventListener('mouseenter', function () {
+      spawnForTheme(this);
+      const self = this;
+      timer = setInterval(function () { spawnForTheme(self); }, 180);
+    });
+    item.addEventListener('mouseleave', function () {
+      clearInterval(timer);
+      timer = null;
+    });
+  });
+})();

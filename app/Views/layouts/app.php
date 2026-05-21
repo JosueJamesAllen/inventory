@@ -94,6 +94,7 @@
       </nav>
 
       <div class="sidebar-footer">
+        <button class="about-trigger" id="aboutBtn" title="About this system">v1.0 &nbsp;·&nbsp; PSO Marinduque &nbsp;·&nbsp; 2026</button>
         <div class="user-card">
           <div class="user-avatar"><?= strtoupper(substr($user['name'], 0, 1)) ?></div>
           <div class="user-meta">
@@ -134,6 +135,55 @@
 
   <script src="/inventory/public/js/app.js"></script>
 
+  <div id="about-overlay" style="display:none">
+    <div class="about-card">
+      <button class="about-close" id="aboutClose">✕</button>
+
+      <div class="about-title">IT Equipment Inventory &amp; Borrowing System</div>
+      <div class="about-version">v1.0 &nbsp;·&nbsp; Philippine Statistics Authority &nbsp;·&nbsp; Marinduque PSO &nbsp;·&nbsp; 2026</div>
+
+      <div class="about-divider"></div>
+
+      <p class="about-story">
+        Before this system existed, every borrow and return was logged on a spreadsheet.
+        A file that got out of date. A row that got missed.
+        <br><br>
+        This was built to fix that.
+      </p>
+
+      <div class="about-divider"></div>
+
+      <div class="about-credits-label">Built by</div>
+      <div class="about-credits">
+        <div class="about-person">
+          <span class="about-name">James Allen M. Josue</span>
+          <span class="about-handle">axellexious</span>
+        </div>
+        <div class="about-person">
+          <span class="about-name">Frenz Darren J. Medallon</span>
+          <span class="about-handle">drrnie</span>
+        </div>
+        <div class="about-claude">With a lot of help from Claude.</div>
+        <div class="about-unit">Statistical Unit &nbsp;·&nbsp; May 2026</div>
+      </div>
+
+      <div class="about-divider"></div>
+
+      <div class="about-letter">
+        <div class="about-letter-heading">To whoever maintains this next —</div>
+        This system knows where the laptops are.<br>
+        Keep it running. Update the employee list.<br>
+        If something breaks, check the README.<br><br>
+        It was built with care.<br>
+        We hope it still shows.
+      </div>
+
+      <div class="about-divider"></div>
+
+      <div class="about-footer">Philippine Statistics Authority &nbsp;·&nbsp; Marinduque Provincial Statistics Office</div>
+    </div>
+  </div>
+
   <div id="love-overlay" style="display:none">
     <div class="love-inner">
       <div class="love-heart">♥</div>
@@ -151,16 +201,32 @@
     <div class="konami-inner">
       <div class="konami-name">axellexious</div>
       <div class="konami-name">drrnie<span class="konami-cursor"></span></div>
+
+      <div class="konami-rule"></div>
+
       <div class="konami-body">
-        built an inventory system<br>
-        for the government.<br>
-        <br>
-        it knows where the laptops and tablets are.
+        they replaced a spreadsheet<br>
+        with something that actually works.
       </div>
+
+      <div class="konami-knows">
+        it knows where the laptops are.<br>
+        it knows who borrowed them.<br>
+        it knows when they're overdue.
+      </div>
+
+      <div class="konami-rule"></div>
+
+      <div class="konami-meta">
+        built · may 2026<br>
+        <span class="konami-online"><span class="konami-dot"></span>still running</span>
+      </div>
+
+      <div class="konami-helper">with a lot of help from claude.</div>
+
       <div class="konami-org">
         Philippine Statistics Authority<br>
-        Marinduque Provincial Statistics Office<br>
-        2026
+        Marinduque Provincial Statistics Office
       </div>
       <div class="konami-dismiss">click anywhere · esc to close</div>
     </div>
