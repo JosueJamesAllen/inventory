@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Middleware\AuthMiddleware;
 use App\Middleware\RoleMiddleware;
+use App\Models\ActivityLog;
 use App\Models\Location;
 use Core\Response;
 use Core\Session;
@@ -40,6 +41,7 @@ class MaintenanceController extends BaseController
         }
 
         $model->create(['cabinet' => $cabinet, 'shelf' => $shelf]);
+        ActivityLog::record('location.created', "Added location {$cabinet} — {$shelf}");
         Session::flash('success', "Location <strong>{$this->e($cabinet)} — {$this->e($shelf)}</strong> added.");
         Response::redirect('/maintenance');
     }
@@ -64,7 +66,11 @@ class MaintenanceController extends BaseController
             Response::redirect('/maintenance');
         }
 
+        $loc = $model->findById($id);
         $model->delete($id);
+        if ($loc) {
+            ActivityLog::record('location.deleted', "Removed location {$loc['cabinet']} — {$loc['shelf']}");
+        }
         Session::flash('success', 'Location removed.');
         Response::redirect('/maintenance');
     }

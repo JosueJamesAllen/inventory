@@ -1,5 +1,16 @@
 let activeScannerPrefix = null;
 
+// ── Activity logging ──────────────────────────────────────
+function logActivity(action, description) {
+  const token = document.querySelector('meta[name="csrf-token"]')?.content;
+  if (!token) return;
+  fetch('/inventory/public/activity/log', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ _csrf: token, action, description }),
+  }).catch(function() {});
+}
+
 // ── Modal helpers ─────────────────────────────────────────
 function openModal(id) {
   const el = document.getElementById(id);

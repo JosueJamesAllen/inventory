@@ -400,12 +400,14 @@ function printDeviceQrs() {
   const items = collectDeviceQrItems();
   if (!items.length) { alert('No devices to print.'); return; }
   openQrPrintWindow(items, 'Devices');
+  logActivity('device.qr_printed', 'Printed QR codes for ' + items.length + ' device(s)');
 }
 
 function downloadDeviceQrPdf() {
   const items = collectDeviceQrItems();
   if (!items.length) { alert('No devices found.'); return; }
   downloadQrPdf(items, 'Devices');
+  logActivity('device.qr_pdf_downloaded', 'Downloaded QR PDF for ' + items.length + ' device(s)');
 }
 
 function openDeviceHistory(id) {

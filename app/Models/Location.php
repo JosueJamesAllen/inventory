@@ -35,6 +35,11 @@ class Location extends BaseModel
         );
     }
 
+    public function findById(int $id): ?array
+    {
+        return $this->queryOne("SELECT * FROM locations WHERE id = ?", [$id]);
+    }
+
     public function delete(int $id): bool
     {
         return $this->execute("DELETE FROM locations WHERE id = ?", [$id]);

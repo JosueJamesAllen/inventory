@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Middleware\AuthMiddleware;
 use App\Middleware\RoleMiddleware;
+use App\Models\ActivityLog;
 use App\Models\Device;
 use App\Models\Location;
 use App\Models\Reconciliation;
@@ -46,6 +47,8 @@ class DeviceController extends BaseController
             'notes'     => $this->request->post('notes'),
         ]);
 
+        $devName = $this->request->post('name');
+        ActivityLog::record('device.created', "Added device {$devName} ({$assetTag})");
         Session::flash('success', 'Device added successfully.');
         Response::redirect('/devices');
     }
@@ -72,6 +75,8 @@ class DeviceController extends BaseController
             'notes'   => $this->request->post('notes'),
         ]);
 
+        $updName = $this->request->post('name');
+        ActivityLog::record('device.updated', "Updated device {$updName} → status: {$newStatus}");
         Session::flash('success', 'Device updated successfully.');
         Response::redirect('/devices');
     }
@@ -101,6 +106,7 @@ class DeviceController extends BaseController
         }
 
         $label = str_replace('_', ' ', $newStatus);
+        ActivityLog::record('device.bulk_updated', 'Set ' . count($ids) . " device(s) to {$label}");
         Session::flash('success', count($ids) . ' device(s) set to <strong>' . $label . '</strong>.');
         Response::redirect('/devices');
     }
@@ -161,6 +167,7 @@ class DeviceController extends BaseController
             $reason
         );
 
+        ActivityLog::record('device.reconciled', "Reconciled {$device['name']} from {$device['status']} to {$newStatus}: {$reason}");
         Session::flash('success', 'Reconciliation logged successfully.');
         Response::redirect('/devices');
     }

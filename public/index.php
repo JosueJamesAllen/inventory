@@ -80,6 +80,13 @@ $router->post('/employees/update',  'EmployeeController@update');
 $router->get('/audit',        'AuditController@index');
 $router->get('/audit/export', 'AuditController@exportCsv');
 
+// My Borrows
+$router->get('/my-borrows', 'MyBorrowsController@index');
+
+// Activity Log
+$router->get( '/activity',     'ActivityLogController@index');
+$router->post('/activity/log', 'ActivityLogController@logAction');
+
 // Maintenance
 $router->get( '/maintenance',                    'MaintenanceController@index');
 $router->post('/maintenance/locations',          'MaintenanceController@storeLocation');
