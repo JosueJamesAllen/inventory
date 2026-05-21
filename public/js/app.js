@@ -579,3 +579,34 @@ function goBack() {
     this.style.display = 'none';
   });
 })();
+
+// ── PSA logo love easter egg ───────────────────────────────
+(function () {
+  let psaClicks = 0;
+  document.getElementById('psa-logo')?.addEventListener('click', function () {
+    if (document.documentElement.getAttribute('data-theme') !== 'pastel') {
+      psaClicks = 0;
+      return;
+    }
+    psaClicks++;
+    if (psaClicks >= 5) {
+      psaClicks = 0;
+      const el = document.getElementById('love-overlay');
+      if (el) {
+        el.style.animation = 'none';
+        el.offsetWidth;
+        el.style.animation = '';
+        el.style.display = 'flex';
+      }
+    }
+  });
+  document.getElementById('love-overlay')?.addEventListener('click', function () {
+    this.style.display = 'none';
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      const el = document.getElementById('love-overlay');
+      if (el) el.style.display = 'none';
+    }
+  });
+})();

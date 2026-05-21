@@ -113,7 +113,7 @@
       <div class="agency-brand">
         <img src="/inventory/public/img/Philippine_Statistics_Authority.svg.png"
              alt="Philippine Statistics Authority"
-             class="agency-logo">
+             class="agency-logo" id="psa-logo">
         <div class="agency-text">
           <span class="agency-name">Philippine Statistics Authority</span>
           <span class="agency-unit">Marinduque Provincial Statistics Office</span>
@@ -133,6 +133,19 @@
   </div>
 
   <script src="/inventory/public/js/app.js"></script>
+
+  <div id="love-overlay" style="display:none">
+    <div class="love-inner">
+      <div class="love-heart">♥</div>
+      <div class="love-to">for my love,</div>
+      <div class="love-name">Krissia Flor Rodelas Rivadeniera</div>
+      <div class="love-body">
+        I hope to marry you someday.<br>
+        I love you so, so much.
+      </div>
+      <div class="love-dismiss">click anywhere · esc to close</div>
+    </div>
+  </div>
 
   <div id="konami-overlay" style="display:none">
     <div class="konami-inner">
