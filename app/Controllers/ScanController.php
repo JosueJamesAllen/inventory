@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Middleware\AuthMiddleware;
+use App\Models\ActivityLog;
 use App\Models\Device;
 use App\Models\Employee;
 use App\Models\Transaction;
@@ -59,6 +60,11 @@ class ScanController extends BaseController
         (new Transaction())->borrow((int)$device['id'], (int)$borrower['id'], $facilitatedBy, $purpose ?: null, $expectedReturn);
         $deviceModel->setStatus((int)$device['id'], 'borrowed');
 
+        $borrowDesc = $facilitatedBy
+            ? "Borrowed {$device['name']} for {$borrower['name']}"
+            : "Borrowed {$device['name']}";
+        ActivityLog::record('scan.borrow', $borrowDesc);
+
         Session::flash('success', "&#10003; <strong>{$this->e($borrower['name'])}</strong> has borrowed <strong>{$this->e($device['name'])}</strong>.");
         Response::redirect('/scan');
     }
@@ -105,6 +111,11 @@ class ScanController extends BaseController
 
         $txModel->return((int)$tx['id'], $returnedBy);
         $deviceModel->setStatus((int)$device['id'], 'available');
+
+        $returnDesc = $returnedBy
+            ? "Returned {$device['name']} on behalf of {$borrower['name']}"
+            : "Returned {$device['name']}";
+        ActivityLog::record('scan.return', $returnDesc);
 
         Session::flash('success', "&#10003; <strong>{$this->e($device['name'])}</strong> returned. Place it at <strong>{$this->e($device['cabinet'])}, {$this->e($device['shelf'])}</strong>.");
         Response::redirect('/scan');

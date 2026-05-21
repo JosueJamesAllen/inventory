@@ -4,7 +4,9 @@ namespace App\Controllers;
 
 use App\Middleware\AuthMiddleware;
 use App\Middleware\RoleMiddleware;
+use App\Models\ActivityLog;
 use App\Models\Device;
+use App\Models\Location;
 use App\Models\Reconciliation;
 use App\Models\Transaction;
 use Core\Response;
@@ -16,8 +18,10 @@ class DeviceController extends BaseController
     {
         AuthMiddleware::handle();
 
+        $loc = new Location();
         $this->view('devices.index', [
-            'devices' => (new Device())->all(),
+            'devices'          => (new Device())->all(),
+            'locationsByGroup' => $loc->grouped(),
         ]);
     }
 
@@ -43,6 +47,8 @@ class DeviceController extends BaseController
             'notes'     => $this->request->post('notes'),
         ]);
 
+        $devName = $this->request->post('name');
+        ActivityLog::record('device.created', "Added device {$devName} ({$assetTag})");
         Session::flash('success', 'Device added successfully.');
         Response::redirect('/devices');
     }
@@ -69,6 +75,8 @@ class DeviceController extends BaseController
             'notes'   => $this->request->post('notes'),
         ]);
 
+        $updName = $this->request->post('name');
+        ActivityLog::record('device.updated', "Updated device {$updName} → status: {$newStatus}");
         Session::flash('success', 'Device updated successfully.');
         Response::redirect('/devices');
     }
@@ -98,6 +106,7 @@ class DeviceController extends BaseController
         }
 
         $label = str_replace('_', ' ', $newStatus);
+        ActivityLog::record('device.bulk_updated', 'Set ' . count($ids) . " device(s) to {$label}");
         Session::flash('success', count($ids) . ' device(s) set to <strong>' . $label . '</strong>.');
         Response::redirect('/devices');
     }
@@ -158,6 +167,7 @@ class DeviceController extends BaseController
             $reason
         );
 
+        ActivityLog::record('device.reconciled', "Reconciled {$device['name']} from {$device['status']} to {$newStatus}: {$reason}");
         Session::flash('success', 'Reconciliation logged successfully.');
         Response::redirect('/devices');
     }

@@ -18,7 +18,7 @@ A locally hosted web application for tracking the borrowing and return of IT equ
 - [Activity Log](#activity-log)
 - [My Borrows](#my-borrows)
 - [Login](#login)
-- [Dark Mode](#dark-mode)
+- [Themes](#themes)
 - [Troubleshooting](#troubleshooting)
 - [Authors](#authors)
 
@@ -53,7 +53,9 @@ This system replaces manual logging with a fast, accurate QR-based process. Any 
 | **QR Code Printing**           | Print a compact sticker sheet of device QR codes directly from the Devices page                 |
 | **Role-Based Access**          | Separate access levels for Admin, IT Staff, and Borrower                                         |
 | **QR Code Privacy**            | Employee QR codes are hidden from IT Staff view — visible to Admins only                        |
-| **Dark Mode**                  | Toggle between light and dark theme, preference saved across sessions                            |
+| **Dark Mode**                  | Toggle between light and dark theme; dark mode adds neon glow effects to cards, modals, and nav items |
+| **Pastel Mode**                | Easter egg — click the theme button 5 times in a row to unlock a pastel color theme             |
+| **Live Device Type Stats**     | Stat cards on the Devices tab show per-type counts that update in real time as filters are applied |
 | **Locally Hosted**             | Runs entirely on your office network — no internet required                                      |
 
 ---
@@ -398,9 +400,25 @@ There are no shared passwords. Each employee's QR code is their credential. Admi
 
 ---
 
-## Dark Mode
+## Themes
 
-Click the **moon icon** (🌙) in the sidebar to toggle dark mode. Your preference is saved automatically and persists across all pages and sessions.
+The theme toggle button is in the top of the sidebar.
+
+| Theme | How to activate | Icon shown |
+| ----- | --------------- | ---------- |
+| **Light** | Default | 🌙 (click to go dark) |
+| **Dark** | Click the toggle once | ☀️ (click to go light) |
+| **Pastel** | Click the toggle 5 times in a row | ✨ (click to return to light) |
+
+Your preference is saved automatically and persists across all pages and sessions.
+
+### Dark Mode Neon Effects
+
+In dark mode, all cards, modals, stat cards, and the agency header have a subtle cyan neon edge glow. Nav items in the sidebar also glow and pulse on hover. These effects are dark mode only and do not appear in light or pastel mode.
+
+### Pastel Mode (Easter Egg)
+
+Clicking the theme button exactly 5 times (not necessarily all in the same direction — just 5 total clicks without landing on pastel) unlocks pastel mode, which applies a soft powder-blue, lilac, and ivory color palette. Click the ✨ button once to return to light mode. The click counter resets on page load, so pastel mode must be unlocked fresh each session (it does persist via `localStorage` across reloads once activated).
 
 ---
 
@@ -427,7 +445,7 @@ Enable debug mode temporarily: open `config/app.php` and set `'debug' => true`. 
 **OPcache serving stale pages after code changes**
 Restart Apache from the XAMPP Control Panel to flush the bytecode cache. A hard browser refresh (Ctrl + Shift + R) alone is not enough when PHP files have changed.
 
-**Dark mode doesn't persist**
+**Theme preference doesn't persist (dark mode, pastel mode)**
 Make sure the browser allows `localStorage`. Incognito/private mode may block it.
 
 **CSS or JS not updating after changes**

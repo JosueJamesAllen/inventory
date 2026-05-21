@@ -1,5 +1,16 @@
 let activeScannerPrefix = null;
 
+// ── Activity logging ──────────────────────────────────────
+function logActivity(action, description) {
+  const token = document.querySelector('meta[name="csrf-token"]')?.content;
+  if (!token) return;
+  fetch('/inventory/public/activity/log', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ _csrf: token, action, description }),
+  }).catch(function() {});
+}
+
 // ── Modal helpers ─────────────────────────────────────────
 function openModal(id) {
   const el = document.getElementById(id);
@@ -23,12 +34,25 @@ document.addEventListener("keydown", function (e) {
 });
 
 // ── Device modals ─────────────────────────────────────────
-function openEditDevice(device) {
+async function openEditDevice(device) {
+  if (typeof refreshLocGroups === "function") {
+    await refreshLocGroups();
+    const cab = document.getElementById("edit-device-cabinet");
+    if (cab) {
+      cab.innerHTML = '<option value="">Select cabinet...</option>';
+      Object.keys(_locGroups).forEach(function(c) {
+        const opt = document.createElement("option");
+        opt.value = opt.textContent = c;
+        cab.appendChild(opt);
+      });
+    }
+  }
   document.getElementById("edit-device-id").value = device.id;
   document.getElementById("edit-device-name").value = device.name;
   document.getElementById("edit-device-type").value = device.type;
-  document.getElementById("edit-device-cabinet").value = device.cabinet;
-  document.getElementById("edit-device-shelf").value = device.shelf;
+  document.getElementById("edit-device-cabinet").value = device.cabinet || "";
+  if (typeof updateShelfOptions === "function") updateShelfOptions("edit");
+  document.getElementById("edit-device-shelf").value = device.shelf || "";
   document.getElementById("edit-device-status").value = device.status;
   document.getElementById("edit-device-notes").value = device.notes || "";
   openModal("modal-edit-device");
@@ -61,13 +85,25 @@ function filterDevices() {
   const type = (
     document.getElementById("typeFilter")?.value || ""
   ).toLowerCase();
+  const location = document.getElementById("locationFilter")?.value || "";
+  const typeCounts = {};
   document.querySelectorAll("#devicesTable tbody tr").forEach((row) => {
     const matchSearch =
       !search || (row.dataset.search || "").toLowerCase().includes(search);
     const matchStatus =
       !status || (row.dataset.status || "").toLowerCase() === status;
     const matchType = !type || (row.dataset.type || "").toLowerCase() === type;
-    row.style.display = matchSearch && matchStatus && matchType ? "" : "none";
+    const matchLocation = !location || (row.dataset.location || "") === location;
+    const visible = matchSearch && matchStatus && matchType && matchLocation;
+    row.style.display = visible ? "" : "none";
+    if (visible) {
+      const t = (row.dataset.type || "").toLowerCase();
+      typeCounts[t] = (typeCounts[t] || 0) + 1;
+    }
+  });
+  document.querySelectorAll("[data-type-count]").forEach((el) => {
+    const t = el.dataset.typeCount;
+    el.textContent = typeCounts[t] || 0;
   });
 }
 
@@ -105,11 +141,11 @@ document.querySelectorAll(".nav-item").forEach((item) => {
   item.addEventListener("click", closeSidebar);
 });
 
-// ── Dark mode ─────────────────────────────────────────────
+// ── Dark / Pastel mode ────────────────────────────────────
 const themeToggle = document.getElementById("themeToggle");
-const themeIcon = document.getElementById("themeIcon");
 const themeToggleMobile = document.getElementById("themeToggleMobile");
 const themeIconMobile = document.getElementById("themeIconMobile");
+let themeClickCount = 0;
 
 function getTheme() {
   try {
@@ -123,8 +159,7 @@ function setTheme(theme) {
   try {
     localStorage.setItem("theme", theme);
   } catch (e) {}
-  const icon = theme === "dark" ? "☀️" : "🌙";
-  if (themeIcon) themeIcon.textContent = icon;
+  const icon = theme === "dark" ? "☀️" : theme === "pastel" ? "✨" : "🌙";
   if (themeIconMobile) themeIconMobile.textContent = icon;
   const authThemeIcon = document.getElementById("authThemeIcon");
   if (authThemeIcon) authThemeIcon.textContent = icon;
@@ -133,11 +168,19 @@ function setTheme(theme) {
 setTheme(getTheme());
 
 function toggleTheme() {
-  setTheme(
-    document.documentElement.getAttribute("data-theme") === "dark"
-      ? "light"
-      : "dark",
-  );
+  const current = document.documentElement.getAttribute("data-theme");
+  if (current === "pastel") {
+    setTheme("light");
+    themeClickCount = 0;
+    return;
+  }
+  themeClickCount++;
+  if (themeClickCount >= 5) {
+    setTheme("pastel");
+    themeClickCount = 0;
+    return;
+  }
+  setTheme(current === "dark" ? "light" : "dark");
 }
 if (themeToggle) themeToggle.addEventListener("click", toggleTheme);
 if (themeToggleMobile) themeToggleMobile.addEventListener("click", toggleTheme);

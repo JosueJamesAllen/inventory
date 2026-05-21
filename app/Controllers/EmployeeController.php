@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Middleware\RoleMiddleware;
+use App\Models\ActivityLog;
 use App\Models\Employee;
 use Core\Response;
 use Core\Session;
@@ -42,6 +43,9 @@ class EmployeeController extends BaseController
             'role'       => $this->request->post('role'),
         ]);
 
+        $name = $this->request->post('name');
+        $role = $this->request->post('role');
+        ActivityLog::record('employee.created', "Added employee {$name} as {$role}");
         Session::flash('success', 'Employee added successfully.');
         Response::redirect('/employees');
     }
@@ -51,13 +55,23 @@ class EmployeeController extends BaseController
         RoleMiddleware::require('admin');
         $this->request->verifyCsrf();
 
-        $id = (int)$this->request->post('employee_id');
+        $id          = (int)$this->request->post('employee_id');
+        $newName     = $this->request->post('name');
+        $newRole     = $this->request->post('role');
+        $empModel    = new Employee();
+        $before      = $empModel->findById($id);
 
-        (new Employee())->update($id, [
-            'name'       => $this->request->post('name'),
+        $empModel->update($id, [
+            'name'       => $newName,
             'department' => $this->request->post('department'),
-            'role'       => $this->request->post('role'),
+            'role'       => $newRole,
         ]);
+
+        if ($before && $before['role'] !== $newRole) {
+            ActivityLog::record('employee.updated', "Changed {$newName}'s role from {$before['role']} to {$newRole}");
+        } else {
+            ActivityLog::record('employee.updated', "Updated employee {$newName}");
+        }
 
         Session::flash('success', 'Employee updated successfully.');
         Response::redirect('/employees');

@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Employee;
 use Core\Response;
 use Core\Session;
@@ -35,6 +36,7 @@ class AuthController extends BaseController
         }
 
         Session::login($employee);
+        ActivityLog::record('auth.login', 'Signed in');
         Session::flash('success', "Welcome back, {$employee['name']}!");
         Response::redirect('/dashboard');
     }
@@ -42,6 +44,7 @@ class AuthController extends BaseController
     public function logout(): void
     {
         $this->request->verifyCsrf();
+        ActivityLog::record('auth.logout', 'Signed out');
         Session::logout();
         Response::redirect('/login');
     }
