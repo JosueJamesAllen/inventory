@@ -134,7 +134,6 @@ document.querySelectorAll(".nav-item").forEach((item) => {
 
 // ── Dark mode ─────────────────────────────────────────────
 const themeToggle = document.getElementById("themeToggle");
-const themeIcon = document.getElementById("themeIcon");
 const themeToggleMobile = document.getElementById("themeToggleMobile");
 const themeIconMobile = document.getElementById("themeIconMobile");
 
@@ -151,7 +150,6 @@ function setTheme(theme) {
     localStorage.setItem("theme", theme);
   } catch (e) {}
   const icon = theme === "dark" ? "☀️" : "🌙";
-  if (themeIcon) themeIcon.textContent = icon;
   if (themeIconMobile) themeIconMobile.textContent = icon;
   const authThemeIcon = document.getElementById("authThemeIcon");
   if (authThemeIcon) authThemeIcon.textContent = icon;
