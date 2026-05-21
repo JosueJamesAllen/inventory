@@ -15,6 +15,8 @@ A locally hosted web application for tracking the borrowing and return of IT equ
 - [User Roles](#user-roles)
 - [How It Works](#how-it-works)
 - [Maintenance](#maintenance)
+- [Activity Log](#activity-log)
+- [My Borrows](#my-borrows)
 - [Login](#login)
 - [Dark Mode](#dark-mode)
 - [Troubleshooting](#troubleshooting)
@@ -42,6 +44,8 @@ This system replaces manual logging with a fast, accurate QR-based process. Any 
 | **Proxy Return**               | Any staff member can return equipment on behalf of the original borrower                         |
 | **Designated Shelf Location**  | Every device has a permanent cabinet and shelf — displayed automatically on return               |
 | **Location Management**        | Add or remove cabinet and shelf combinations from the Maintenance page; device form uses dropdowns |
+| **Activity Log**               | Admin-only feed of every action taken in the system — logins, role changes, device edits, borrows, QR prints, CSV exports, and more |
+| **My Borrows**                 | Borrower-facing page showing currently checked-out equipment and full personal borrow history |
 | **Manual Reconciliation**      | IT staff can override device status during physical inventory, with reason and timestamp logged  |
 | **Equipment Audit Log**        | Full history per device — who borrowed it, for what purpose, who returned it, and when          |
 | **Employee Audit Log**         | Full borrowing history per employee across all devices                                           |
@@ -176,7 +180,9 @@ inventory/
 │   │   ├── DeviceController.php
 │   │   ├── EmployeeController.php
 │   │   ├── AuditController.php
-│   │   └── MaintenanceController.php
+│   │   ├── MaintenanceController.php
+│   │   ├── ActivityLogController.php
+│   │   └── MyBorrowsController.php
 │   │
 │   ├── Models/              ← Database queries, one class per table
 │   │   ├── BaseModel.php
@@ -184,7 +190,8 @@ inventory/
 │   │   ├── Device.php
 │   │   ├── Transaction.php
 │   │   ├── Reconciliation.php
-│   │   └── Location.php
+│   │   ├── Location.php
+│   │   └── ActivityLog.php
 │   │
 │   ├── Views/               ← PHP templates, organised by page
 │   │   ├── layouts/
@@ -196,7 +203,9 @@ inventory/
 │   │   ├── devices/
 │   │   ├── employees/
 │   │   ├── audit/
-│   │   └── maintenance/
+│   │   ├── maintenance/
+│   │   ├── activity_log/
+│   │   └── my_borrows/
 │   │
 │   └── Middleware/
 │       ├── AuthMiddleware.php
@@ -214,8 +223,9 @@ inventory/
 │   └── database.php         ← DB credentials
 │
 └── storage/
-    ├── inventory.sql                  ← Schema + seed data (import once)
-    └── migration_add_locations.sql    ← Run on existing installs to add locations table
+    ├── inventory.sql                    ← Schema + seed data (import once)
+    ├── migration_add_locations.sql      ← Run on existing installs to add locations table
+    └── migration_add_activity_log.sql   ← Run on existing installs to add activity_log table
 ```
 
 > **Important:** Only the `public/` folder is served by Apache. All other folders — `app/`, `core/`, `config/`, `storage/` — are never directly accessible from the browser.
@@ -226,9 +236,9 @@ inventory/
 
 | Role         | Access                                                                                        |
 | ------------ | --------------------------------------------------------------------------------------------- |
-| **Admin**    | Full access — manages devices and employees, views all reports, exports data, sees QR codes   |
+| **Admin**    | Full access — manages devices and employees, views all reports, exports data, sees QR codes, views Activity Log |
 | **IT Staff** | Facilitates borrow/return transactions, manages devices and locations, views employee list (QR codes hidden) |
-| **Borrower** | Can scan their own ID to borrow or return equipment independently                             |
+| **Borrower** | Can scan their own ID to borrow or return equipment independently; sees personal borrow history via My Borrows |
 
 ---
 
@@ -322,6 +332,58 @@ There is no rename function. To rename a location (e.g. `Cabinet A` → `Storage
 1. Edit each device assigned to the old location and select the new one
 2. Once the old location's device count reaches zero, remove it from Maintenance
 3. Add the new location name if it does not already exist
+
+---
+
+## Activity Log
+
+The **Activity Log** page (accessible to Admin only) provides a unified, actor-centric record of every significant action taken in the system — separate from the device and employee audit logs, which are device/borrower-centric.
+
+### What is recorded
+
+| Category   | Actions logged |
+| ---------- | -------------- |
+| **auth**     | Sign in, sign out |
+| **employee** | Employee added; employee updated; role changed (old → new role shown explicitly) |
+| **device**   | Device added; device updated; bulk status change; manual reconciliation |
+| **location** | Location added; location removed |
+| **scan**     | Device borrowed (self-serve or facilitated); device returned (direct or proxy) |
+| **audit**    | Equipment or employee CSV exported |
+| **device**   | QR codes printed or downloaded as PDF |
+
+### Filtering
+
+The page supports filtering by user, category, and date range — all client-side, no page reload.
+
+### First-Time Setup (existing installs only)
+
+If the app was already running before the Activity Log was added, run this once in phpMyAdmin → `inventory_db` → **SQL** tab:
+
+```sql
+CREATE TABLE IF NOT EXISTS `activity_log` (
+    `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id`     INT UNSIGNED        NULL,
+    `user_name`   VARCHAR(120)    NOT NULL DEFAULT '',
+    `user_role`   VARCHAR(20)     NOT NULL DEFAULT '',
+    `action`      VARCHAR(60)     NOT NULL,
+    `description` TEXT            NOT NULL,
+    `created_at`  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_created` (`created_at`),
+    KEY `idx_user`    (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+This is also saved as `storage/migration_add_activity_log.sql`. Fresh installs using `storage/inventory.sql` get the table automatically.
+
+---
+
+## My Borrows
+
+The **My Borrows** page is visible to Borrowers only (not shown to Admin or IT Staff, who have the full Audit Log instead). It gives borrowers a self-service view of their account without needing to ask IT staff.
+
+- **Currently Borrowing** — active checkouts with device name, type, shelf location, borrowed date, and due date. Overdue items are highlighted in red.
+- **Borrow History** — all past transactions with return dates and who returned the device.
 
 ---
 
