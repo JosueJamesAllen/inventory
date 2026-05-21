@@ -1,4 +1,22 @@
-<?php $canEdit = in_array($user['role'], ['admin', 'it_staff']); ?>
+<?php
+$canEdit = in_array($user['role'], ['admin', 'it_staff']);
+
+$typeCounts = [];
+foreach ($devices as $d) {
+    $t = $d['type'];
+    $typeCounts[$t] = ($typeCounts[$t] ?? 0) + 1;
+}
+arsort($typeCounts);
+
+$typeIcons = [
+    'laptop'   => 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+    'tablet'   => 'M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z',
+    'desktop'  => 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+    'printer'  => 'M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z',
+    'default'  => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10',
+];
+$iconColors = ['si-blue', 'si-purple', 'si-green', 'si-amber', 'si-teal', 'si-red'];
+?>
 
 <div class="page-header">
   <div>
@@ -12,6 +30,28 @@
     <button class="btn btn-primary" onclick="openAddDeviceModal()">+ Add Device</button>
     <?php endif; ?>
   </div>
+</div>
+
+<!-- Device type stat cards -->
+<div class="stats-grid">
+<?php $i = 0; foreach ($typeCounts as $type => $count):
+    $key  = strtolower($type);
+    $icon = $typeIcons[$key] ?? $typeIcons['default'];
+    $col  = $iconColors[$i % count($iconColors)];
+    $i++;
+?>
+  <div class="stat-card" data-type-card="<?= htmlspecialchars(strtolower($type)) ?>">
+    <div class="stat-icon <?= $col ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="<?= $icon ?>"/>
+      </svg>
+    </div>
+    <div>
+      <div class="stat-value" data-type-count="<?= htmlspecialchars(strtolower($type)) ?>"><?= $count ?></div>
+      <div class="stat-label"><?= htmlspecialchars($type) ?></div>
+    </div>
+  </div>
+<?php endforeach; ?>
 </div>
 
 <!-- Filters -->

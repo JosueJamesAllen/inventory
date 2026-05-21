@@ -86,6 +86,7 @@ function filterDevices() {
     document.getElementById("typeFilter")?.value || ""
   ).toLowerCase();
   const location = document.getElementById("locationFilter")?.value || "";
+  const typeCounts = {};
   document.querySelectorAll("#devicesTable tbody tr").forEach((row) => {
     const matchSearch =
       !search || (row.dataset.search || "").toLowerCase().includes(search);
@@ -93,8 +94,16 @@ function filterDevices() {
       !status || (row.dataset.status || "").toLowerCase() === status;
     const matchType = !type || (row.dataset.type || "").toLowerCase() === type;
     const matchLocation = !location || (row.dataset.location || "") === location;
-    row.style.display =
-      matchSearch && matchStatus && matchType && matchLocation ? "" : "none";
+    const visible = matchSearch && matchStatus && matchType && matchLocation;
+    row.style.display = visible ? "" : "none";
+    if (visible) {
+      const t = (row.dataset.type || "").toLowerCase();
+      typeCounts[t] = (typeCounts[t] || 0) + 1;
+    }
+  });
+  document.querySelectorAll("[data-type-count]").forEach((el) => {
+    const t = el.dataset.typeCount;
+    el.textContent = typeCounts[t] || 0;
   });
 }
 
@@ -132,10 +141,11 @@ document.querySelectorAll(".nav-item").forEach((item) => {
   item.addEventListener("click", closeSidebar);
 });
 
-// ── Dark mode ─────────────────────────────────────────────
+// ── Dark / Pastel mode ────────────────────────────────────
 const themeToggle = document.getElementById("themeToggle");
 const themeToggleMobile = document.getElementById("themeToggleMobile");
 const themeIconMobile = document.getElementById("themeIconMobile");
+let themeClickCount = 0;
 
 function getTheme() {
   try {
@@ -149,7 +159,7 @@ function setTheme(theme) {
   try {
     localStorage.setItem("theme", theme);
   } catch (e) {}
-  const icon = theme === "dark" ? "☀️" : "🌙";
+  const icon = theme === "dark" ? "☀️" : theme === "pastel" ? "✨" : "🌙";
   if (themeIconMobile) themeIconMobile.textContent = icon;
   const authThemeIcon = document.getElementById("authThemeIcon");
   if (authThemeIcon) authThemeIcon.textContent = icon;
@@ -158,11 +168,19 @@ function setTheme(theme) {
 setTheme(getTheme());
 
 function toggleTheme() {
-  setTheme(
-    document.documentElement.getAttribute("data-theme") === "dark"
-      ? "light"
-      : "dark",
-  );
+  const current = document.documentElement.getAttribute("data-theme");
+  if (current === "pastel") {
+    setTheme("light");
+    themeClickCount = 0;
+    return;
+  }
+  themeClickCount++;
+  if (themeClickCount >= 5) {
+    setTheme("pastel");
+    themeClickCount = 0;
+    return;
+  }
+  setTheme(current === "dark" ? "light" : "dark");
 }
 if (themeToggle) themeToggle.addEventListener("click", toggleTheme);
 if (themeToggleMobile) themeToggleMobile.addEventListener("click", toggleTheme);
