@@ -131,8 +131,7 @@
       datasets: [{
         data: [<?= $available ?>, <?= $borrowed ?>, <?= $oos ?>],
         backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
-        borderColor: isDark ? '#1e293b' : '#ffffff',
-        borderWidth: 3,
+        borderWidth: 0,
         hoverOffset: 6,
       }],
     },

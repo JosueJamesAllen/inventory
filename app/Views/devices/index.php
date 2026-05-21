@@ -1,4 +1,22 @@
-<?php $canEdit = in_array($user['role'], ['admin', 'it_staff']); ?>
+<?php
+$canEdit = in_array($user['role'], ['admin', 'it_staff']);
+
+$typeCounts = [];
+foreach ($devices as $d) {
+    $t = $d['type'];
+    $typeCounts[$t] = ($typeCounts[$t] ?? 0) + 1;
+}
+arsort($typeCounts);
+
+$typeIcons = [
+    'laptop'   => 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+    'tablet'   => 'M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z',
+    'desktop'  => 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+    'printer'  => 'M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z',
+    'default'  => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10',
+];
+$iconColors = ['si-blue', 'si-purple', 'si-green', 'si-amber', 'si-teal', 'si-red'];
+?>
 
 <div class="page-header">
   <div>
@@ -9,9 +27,31 @@
     <button class="btn btn-outline" onclick="printDeviceQrs()">Print QR Codes</button>
     <button class="btn btn-outline" onclick="downloadDeviceQrPdf()">Download PDF</button>
     <?php if ($canEdit): ?>
-    <button class="btn btn-primary" onclick="openModal('modal-add-device')">+ Add Device</button>
+    <button class="btn btn-primary" onclick="openAddDeviceModal()">+ Add Device</button>
     <?php endif; ?>
   </div>
+</div>
+
+<!-- Device type stat cards -->
+<div class="stats-grid">
+<?php $i = 0; foreach ($typeCounts as $type => $count):
+    $key  = strtolower($type);
+    $icon = $typeIcons[$key] ?? $typeIcons['default'];
+    $col  = $iconColors[$i % count($iconColors)];
+    $i++;
+?>
+  <div class="stat-card" data-type-card="<?= htmlspecialchars(strtolower($type)) ?>">
+    <div class="stat-icon <?= $col ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="<?= $icon ?>"/>
+      </svg>
+    </div>
+    <div>
+      <div class="stat-value" data-type-count="<?= htmlspecialchars(strtolower($type)) ?>"><?= $count ?></div>
+      <div class="stat-label"><?= htmlspecialchars($type) ?></div>
+    </div>
+  </div>
+<?php endforeach; ?>
 </div>
 
 <!-- Filters -->
@@ -30,6 +70,14 @@
     sort($types);
     foreach ($types as $t): ?>
     <option value="<?= htmlspecialchars($t) ?>"><?= htmlspecialchars($t) ?></option>
+    <?php endforeach; ?>
+  </select>
+  <select id="locationFilter" onchange="filterDevices()">
+    <option value="">All Locations</option>
+    <?php foreach ($locationsByGroup as $lcab => $shelves): ?>
+      <?php foreach ($shelves as $lshelf): ?>
+    <option value="<?= htmlspecialchars($lcab . '|' . $lshelf) ?>"><?= htmlspecialchars($lcab) ?> — <?= htmlspecialchars($lshelf) ?></option>
+      <?php endforeach; ?>
     <?php endforeach; ?>
   </select>
 </div>
@@ -53,6 +101,7 @@
     <?php foreach ($devices as $d): ?>
     <tr data-status="<?= htmlspecialchars($d['status']) ?>"
         data-type="<?= htmlspecialchars(strtolower($d['type'])) ?>"
+        data-location="<?= htmlspecialchars($d['cabinet'] . '|' . $d['shelf']) ?>"
         data-search="<?= htmlspecialchars(strtolower($d['name'] . ' ' . $d['asset_tag'] . ' ' . $d['type'])) ?>">
       <?php if ($canEdit): ?>
       <td><input type="checkbox" class="bulk-cb" value="<?= (int)$d['id'] ?>" onchange="bulkUpdateBar()"></td>
@@ -121,11 +170,21 @@
         </div>
         <div class="form-group">
           <label>Cabinet *</label>
-          <input type="text" name="cabinet" required placeholder="Cabinet A">
+          <select name="cabinet" id="add-device-cabinet" required onchange="updateShelfOptions('add')">
+            <option value="">Select cabinet...</option>
+            <?php foreach (array_keys($locationsByGroup) as $cab): ?>
+            <option value="<?= htmlspecialchars($cab) ?>"><?= htmlspecialchars($cab) ?></option>
+            <?php endforeach; ?>
+          </select>
+          <?php if (empty($locationsByGroup)): ?>
+          <small><a href="/inventory/public/maintenance">No locations defined — add them in Maintenance</a></small>
+          <?php endif; ?>
         </div>
         <div class="form-group">
           <label>Shelf *</label>
-          <input type="text" name="shelf" required placeholder="Shelf 1">
+          <select name="shelf" id="add-device-shelf" required>
+            <option value="">Select cabinet first...</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Notes</label>
@@ -161,11 +220,18 @@
         </div>
         <div class="form-group">
           <label>Cabinet *</label>
-          <input type="text" name="cabinet" id="edit-device-cabinet" required>
+          <select name="cabinet" id="edit-device-cabinet" required onchange="updateShelfOptions('edit')">
+            <option value="">Select cabinet...</option>
+            <?php foreach (array_keys($locationsByGroup) as $cab): ?>
+            <option value="<?= htmlspecialchars($cab) ?>"><?= htmlspecialchars($cab) ?></option>
+            <?php endforeach; ?>
+          </select>
         </div>
         <div class="form-group">
           <label>Shelf *</label>
-          <input type="text" name="shelf" id="edit-device-shelf" required>
+          <select name="shelf" id="edit-device-shelf" required>
+            <option value="">Select cabinet first...</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Status *</label>
@@ -265,6 +331,45 @@
 </div>
 
 <script>
+let _locGroups = <?= json_encode($locationsByGroup) ?>;
+
+async function refreshLocGroups() {
+  try {
+    const res = await fetch('/inventory/public/api/locations');
+    _locGroups = await res.json();
+  } catch(e) {}
+}
+
+async function openAddDeviceModal() {
+  await refreshLocGroups();
+  const cab = document.getElementById('add-device-cabinet');
+  const prev = cab ? cab.value : '';
+  cab.innerHTML = '<option value="">Select cabinet...</option>';
+  Object.keys(_locGroups).forEach(function(c) {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = c;
+    cab.appendChild(opt);
+  });
+  cab.value = prev;
+  updateShelfOptions('add');
+  openModal('modal-add-device');
+}
+
+function updateShelfOptions(prefix) {
+  const cab      = document.getElementById(prefix + '-device-cabinet').value;
+  const shelfSel = document.getElementById(prefix + '-device-shelf');
+  const prev     = shelfSel.value;
+  shelfSel.innerHTML = '<option value="">Select shelf...</option>';
+  if (_locGroups[cab]) {
+    _locGroups[cab].forEach(function(shelf) {
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = shelf;
+      shelfSel.appendChild(opt);
+    });
+    shelfSel.value = prev;
+  }
+}
+
 function bulkUpdateBar() {
   const checked = document.querySelectorAll('.bulk-cb:checked');
   const bar     = document.getElementById('bulk-bar');
@@ -335,12 +440,14 @@ function printDeviceQrs() {
   const items = collectDeviceQrItems();
   if (!items.length) { alert('No devices to print.'); return; }
   openQrPrintWindow(items, 'Devices');
+  logActivity('device.qr_printed', 'Printed QR codes for ' + items.length + ' device(s)');
 }
 
 function downloadDeviceQrPdf() {
   const items = collectDeviceQrItems();
   if (!items.length) { alert('No devices found.'); return; }
   downloadQrPdf(items, 'Devices');
+  logActivity('device.qr_pdf_downloaded', 'Downloaded QR PDF for ' + items.length + ' device(s)');
 }
 
 function openDeviceHistory(id) {

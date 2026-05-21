@@ -97,6 +97,22 @@ class Transaction extends BaseModel
         );
     }
 
+    public function borrowsByEmployee(int $employeeId): array
+    {
+        return $this->query("
+            SELECT t.id, t.borrowed_at, t.returned_at, t.purpose, t.expected_return_at,
+                   d.name AS device_name, d.asset_tag, d.type AS device_type, d.cabinet, d.shelf,
+                   e2.name AS facilitated_by_name,
+                   e3.name AS returned_by_name
+            FROM transactions t
+            JOIN devices   d  ON t.device_id      = d.id
+            LEFT JOIN employees e2 ON t.facilitated_by = e2.id
+            LEFT JOIN employees e3 ON t.returned_by    = e3.id
+            WHERE t.borrower_id = ?
+            ORDER BY t.returned_at IS NULL DESC, t.borrowed_at DESC
+        ", [$employeeId]);
+    }
+
     public function historyByDevice(int $deviceId): array
     {
         return $this->query("

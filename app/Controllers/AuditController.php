@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Middleware\AuthMiddleware;
+use App\Models\ActivityLog;
 use App\Models\Reconciliation;
 use App\Models\Transaction;
 use Core\Response;
@@ -71,6 +72,7 @@ class AuditController extends BaseController
         $csv      = ob_get_clean();
         $filename = $type . '_audit_' . date('Y-m-d') . '.csv';
 
+        ActivityLog::record('audit.export', "Exported {$type} audit log as CSV");
         Response::download($filename, $csv);
     }
 }
