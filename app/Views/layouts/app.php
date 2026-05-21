@@ -142,7 +142,7 @@
         built an inventory system<br>
         for the government.<br>
         <br>
-        it knows where the laptops are.
+        it knows where the laptops and tablets are.
       </div>
       <div class="konami-org">
         Philippine Statistics Authority<br>
