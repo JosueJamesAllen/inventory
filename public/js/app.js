@@ -582,6 +582,33 @@ function goBack() {
 
 // ── PSA logo love easter egg ───────────────────────────────
 (function () {
+  const DUST_CHARS  = ['✦', '✧', '⋆', '✶', '·', '✸', '❋', '♥'];
+  const DUST_COLORS = ['#f0b8d8', '#C8A2C8', '#f5d0e8', '#d4b0e0', '#ffb6c1', '#e0a0d0', '#ffd6e7', '#c8a0e0'];
+
+  function spawnLoveStardust() {
+    const cx = window.innerWidth  / 2;
+    const cy = window.innerHeight / 2;
+    for (let i = 0; i < 80; i++) {
+      const delay = Math.random() * 1100;
+      setTimeout(function () {
+        const el = document.createElement('span');
+        el.className = 'love-stardust';
+        el.textContent = DUST_CHARS[Math.floor(Math.random() * DUST_CHARS.length)];
+        el.style.cssText = [
+          `left:${cx + (Math.random() - 0.5) * 520}px`,
+          `top:${cy  + (Math.random() - 0.5) * 400}px`,
+          `font-size:${0.45 + Math.random() * 1.2}rem`,
+          `color:${DUST_COLORS[Math.floor(Math.random() * DUST_COLORS.length)]}`,
+          `--sdx:${(Math.random() - 0.5) * 140}px`,
+          `--sdy:${-(30 + Math.random() * 110)}px`,
+          `--srot:${(Math.random() - 0.5) * 320}deg`,
+        ].join(';');
+        document.body.appendChild(el);
+        setTimeout(function () { el.remove(); }, 1200);
+      }, delay);
+    }
+  }
+
   let psaClicks = 0;
   document.getElementById('psa-logo')?.addEventListener('click', function () {
     if (document.documentElement.getAttribute('data-theme') !== 'pastel') {
@@ -597,6 +624,7 @@ function goBack() {
         el.offsetWidth;
         el.style.animation = '';
         el.style.display = 'flex';
+        spawnLoveStardust();
       }
     }
   });

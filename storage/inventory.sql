@@ -34,14 +34,16 @@ CREATE TABLE IF NOT EXISTS devices (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS transactions (
-    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    device_id       INT UNSIGNED NOT NULL,
-    borrower_id     INT UNSIGNED NOT NULL,
-    facilitated_by  INT UNSIGNED NULL,
-    returned_by     INT UNSIGNED NULL,
-    borrowed_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
-    returned_at     DATETIME NULL,
-    notes           TEXT,
+    id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    device_id           INT UNSIGNED NOT NULL,
+    borrower_id         INT UNSIGNED NOT NULL,
+    facilitated_by      INT UNSIGNED NULL,
+    returned_by         INT UNSIGNED NULL,
+    borrowed_at         DATETIME DEFAULT CURRENT_TIMESTAMP,
+    returned_at         DATETIME NULL,
+    notes               TEXT,
+    purpose             TEXT        NULL,
+    expected_return_at  DATETIME    NULL,
     FOREIGN KEY (device_id)      REFERENCES devices(id)   ON DELETE RESTRICT,
     FOREIGN KEY (borrower_id)    REFERENCES employees(id) ON DELETE RESTRICT,
     FOREIGN KEY (facilitated_by) REFERENCES employees(id) ON DELETE SET NULL,
@@ -113,12 +115,12 @@ INSERT INTO employees (name, department, qr_code, role) VALUES
 -- ── Seed: Devices ───────────────────────────────────────────
 
 INSERT INTO devices (name, type, asset_tag, qr_code, status, cabinet, shelf) VALUES
-('Acer TravelMate P',    'Laptop',    'LAP-0000-21-108-0133', 'QR-DEV-L001', 'borrowed',  'Cabinet A', 'Shelf 1'),
+('Acer TravelMate P',    'Laptop',    'LAP-0000-21-108-0133', 'QR-DEV-L001', 'available', 'Cabinet A', 'Shelf 1'),
 ('Acer TravelMate P',    'Laptop',    'ICS-LAP-1700-24-255-00007', 'QR-DEV-L002', 'available', 'Cabinet A', 'Shelf 1'),
 ('Acer TravelMate P',    'Laptop',    'ICS-LAP-1700-24-255-00008', 'QR-DEV-L003', 'available', 'Cabinet A', 'Shelf 2'),
 ('Acer TravelMate P',    'Laptop',    'LAP-0000-22-039-0206', 'QR-DEV-L004', 'available', 'Cabinet A', 'Shelf 2'),
 ('Acer TravelMate P2',   'Laptop',    'LAP-0000-22-039-0205', 'QR-DEV-L005', 'available', 'Cabinet A', 'Shelf 3'),
-('Acer Predator Helios 300', 'Laptop', 'LAP-1700-23-252-00003', 'QR-DEV-L006', 'borrowed',  'Cabinet B', 'Shelf 1'),
+('Acer Predator Helios 300', 'Laptop', 'LAP-1700-23-252-00003', 'QR-DEV-L006', 'available', 'Cabinet B', 'Shelf 1'),
 ('Acer TravelMate P2',   'Laptop',    'LAP-0000-21-108-0131', 'QR-DEV-L007', 'available', 'Cabinet B', 'Shelf 1'),
 ('Acer TravelMate P2',   'Laptop',    'LAP-0000-22-029', 'QR-DEV-L008', 'available', 'Cabinet B', 'Shelf 2'),
 ('Acer TravelMate P2',   'Laptop',    'LAP-0000-21-108-0132', 'QR-DEV-L009', 'available', 'Cabinet C', 'Shelf 1'),
@@ -446,38 +448,3 @@ INSERT INTO locations (cabinet, shelf) VALUES
 ('Cabinet 2', 'CBMS 2A'),
 ('Cabinet 2', 'CBMS 2B');
 
--- ── Seed: Transactions ──────────────────────────────────────
-
--- Active borrow: Maria borrowed ThinkPad X1 (facilitated by Frenz)
-INSERT INTO transactions (device_id, borrower_id, facilitated_by, borrowed_at)
-SELECT d.id, e1.id, e2.id, NOW() - INTERVAL 3 HOUR
-FROM devices d, employees e1, employees e2
-WHERE d.asset_tag='DEV-L001' AND e1.qr_code='EMP-003' AND e2.qr_code='EMP-002';
-
--- Active borrow: Carlos borrowed Dell Monitor (self-service)
-INSERT INTO transactions (device_id, borrower_id, borrowed_at)
-SELECT d.id, e.id, NOW() - INTERVAL 1 HOUR
-FROM devices d, employees e
-WHERE d.asset_tag='DEV-M001' AND e.qr_code='EMP-004';
-
--- Past completed transactions
-INSERT INTO transactions (device_id, borrower_id, borrowed_at, returned_at) VALUES
-(3, 5, NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 1 DAY),
-(4, 6, NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 2 DAY),
-(7, 3, NOW() - INTERVAL 4 DAY, NOW() - INTERVAL 3 DAY),
-(9, 7, NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 4 DAY),
-(5, 4, NOW() - INTERVAL 6 DAY, NOW() - INTERVAL 5 DAY),
-(2, 6, NOW() - INTERVAL 7 DAY, NOW() - INTERVAL 6 DAY);
-
--- Proxy return example: Ana returned on behalf of Rico
-INSERT INTO transactions (device_id, borrower_id, returned_by, borrowed_at, returned_at)
-SELECT d.id, e1.id, e2.id, NOW() - INTERVAL 8 DAY, NOW() - INTERVAL 7 DAY
-FROM devices d, employees e1, employees e2
-WHERE d.asset_tag='DEV-L003' AND e1.qr_code='EMP-006' AND e2.qr_code='EMP-005';
-
--- ── Seed: Reconciliations ────────────────────────────────────
-
-INSERT INTO reconciliations (device_id, performed_by, old_status, new_status, reason)
-SELECT d.id, e.id, 'borrowed', 'out_of_service', 'Device found damaged during physical inventory. Screen cracked.'
-FROM devices d, employees e
-WHERE d.asset_tag='DEV-H002' AND e.qr_code='EMP-001';
