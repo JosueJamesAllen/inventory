@@ -11,6 +11,8 @@ A locally hosted web application for tracking the borrowing and return of IT equ
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Database Setup](#database-setup)
+- [Upgrading an Existing Install](#upgrading-an-existing-install)
+- [Known Issues & Fixes](#known-issues--fixes)
 - [Project Structure](#project-structure)
 - [User Roles](#user-roles)
 - [How It Works](#how-it-works)
@@ -54,7 +56,7 @@ This system replaces manual logging with a fast, accurate QR-based process. Any 
 | **Role-Based Access**          | Separate access levels for Admin, IT Staff, and Borrower                                         |
 | **QR Code Privacy**            | Employee QR codes are hidden from IT Staff view — visible to Admins only                        |
 | **Dark Mode**                  | Toggle between light and dark theme; dark mode adds neon glow effects to cards, modals, and nav items |
-| **Pastel Mode**                | Easter egg — click the theme button 5 times in a row to unlock a pastel color theme             |
+| **Pastel Mode**                | A hidden third theme. Some things are worth discovering on your own.                             |
 | **Live Device Type Stats**     | Stat cards on the Devices tab show per-type counts that update in real time as filters are applied |
 | **Locally Hosted**             | Runs entirely on your office network — no internet required                                      |
 
@@ -62,80 +64,138 @@ This system replaces manual logging with a fast, accurate QR-based process. Any 
 
 ## Requirements
 
-- [XAMPP](https://www.apachefriends.org/) (Apache + MySQL + PHP 8.0+)
-- A modern browser (Chrome, Firefox, Edge)
+- [XAMPP](https://www.apachefriends.org/) v8.2 or later (Apache + MySQL + PHP 8.0+)
+- A modern browser (Chrome 90+, Firefox 88+, Edge 90+)
 - Camera access (for QR scanning on the Borrow / Return and Login pages)
+- A device with a webcam or rear-facing camera
 
 ---
 
 ## Installation
 
-**1. Clone or extract the project**
+Follow these steps in order. Each step includes a verification check so you can catch problems early.
 
-Place the `inventory` folder inside your XAMPP web root:
+---
+
+### Step 1 — Install and start XAMPP
+
+1. Download XAMPP from [https://www.apachefriends.org/](https://www.apachefriends.org/) and run the installer with default options.
+2. Open the **XAMPP Control Panel**.
+3. Click **Start** next to **Apache** and **MySQL**. Both status lights should turn green.
+4. Verify Apache is running by visiting `http://localhost` in your browser — you should see the XAMPP welcome page.
+
+> If port 80 is in use (common on Windows with IIS or Skype), open `C:/xampp/apache/conf/httpd.conf`, find `Listen 80`, and change it to an unused port such as `Listen 8080`. Update all URLs in this guide accordingly (e.g. `http://localhost:8080/inventory/public`).
+
+---
+
+### Step 2 — Place the project files
+
+Clone the repository or extract the ZIP into your XAMPP web root so the path is exactly:
 
 ```
 C:/xampp/htdocs/inventory/
 ```
 
-**2. Enable mod_rewrite in Apache**
+Verify the folder contains `public/`, `app/`, `core/`, `config/`, and `storage/` at the root level. If you see those inside an extra subfolder (e.g. `inventory/inventory/`), move them up one level.
 
-Open `C:/xampp/apache/conf/httpd.conf` and make these two changes:
+---
 
-Uncomment the rewrite module (remove the `#`):
+### Step 3 — Enable mod_rewrite in Apache
+
+The app uses clean URLs routed through a single entry point. Without mod_rewrite, every page except the home page returns 404.
+
+**3a. Enable the rewrite module**
+
+Open `C:/xampp/apache/conf/httpd.conf` in a text editor (Notepad++ recommended). Search for:
+
+```apache
+#LoadModule rewrite_module modules/mod_rewrite.so
+```
+
+Remove the leading `#` so it reads:
 
 ```apache
 LoadModule rewrite_module modules/mod_rewrite.so
 ```
 
-Find the `<Directory "C:/xampp/htdocs">` block and change:
+**3b. Allow .htaccess overrides**
+
+In the same file, find the `<Directory "C:/xampp/htdocs">` block. It will look like this:
 
 ```apache
-AllowOverride None
+<Directory "C:/xampp/htdocs">
+    Options Indexes FollowSymLinks Includes ExecCGI
+    AllowOverride None
+    Require all granted
+</Directory>
 ```
 
-to:
+Change `AllowOverride None` to `AllowOverride All`:
 
 ```apache
-AllowOverride All
+<Directory "C:/xampp/htdocs">
+    Options Indexes FollowSymLinks Includes ExecCGI
+    AllowOverride All
+    Require all granted
+</Directory>
 ```
 
-Restart Apache in the XAMPP Control Panel after saving.
+**3c. Restart Apache**
 
-**3. Set up the database**
+Save the file, then click **Stop** and **Start** on Apache in the XAMPP Control Panel. Do not skip the restart — the change has no effect until Apache reloads its config.
+
+**Verify:** Visit `http://localhost/inventory/public` — you should see the login page, not a 404.
+
+---
+
+### Step 4 — Set up the database
 
 See [Database Setup](#database-setup) below.
 
-**4. Open the app**
+---
 
-```
-http://localhost/inventory/public
-```
+### Step 5 — Verify the full installation
+
+After completing the database setup, run through this checklist:
+
+- [ ] `http://localhost/inventory/public` loads the login page
+- [ ] Camera activates automatically on the login page (you may need to allow camera permissions in the browser)
+- [ ] Scanning a valid employee QR code logs you in
+- [ ] The dashboard loads with correct device and borrow counts
+- [ ] The Borrow / Return page can open the camera scanner
+
+If any step fails, see [Troubleshooting](#troubleshooting).
 
 ---
 
 ## Database Setup
 
-**1. Open phpMyAdmin**
+### 1. Open phpMyAdmin
 
 ```
 http://localhost/phpmyadmin
 ```
 
-**2. Create the database**
+### 2. Create the database
 
-Click **New** in the left sidebar, name it `inventory_db`, set collation to `utf8mb4_unicode_ci`, and click **Create**.
+1. Click **New** in the left sidebar
+2. Enter `inventory_db` as the database name
+3. Set the collation to `utf8mb4_unicode_ci`
+4. Click **Create**
 
-**3. Import the schema and seed data**
+### 3. Import the schema and seed data
 
-- Select `inventory_db` from the sidebar
-- Click the **Import** tab
-- Click **Choose File** and select `storage/inventory.sql`
-- Click **Go**
+1. Select `inventory_db` from the left sidebar
+2. Click the **Import** tab at the top
+3. Click **Choose File** and navigate to `storage/inventory.sql` inside the project folder
+4. Leave all other options at their defaults
+5. Click **Go**
 
-This creates all tables and loads the employee registry, device inventory, and any initial data included in the SQL file.
+This creates all tables and loads the employee registry, device inventory, locations, and any initial data included in the SQL file.
 
-**4. Verify the database config**
+**Verify:** Click on `inventory_db` in the sidebar. You should see the following tables: `activity_log`, `devices`, `employees`, `locations`, `reconciliations`, `transactions`.
+
+### 4. Confirm the database config
 
 Open `config/database.php` and confirm the credentials match your XAMPP setup:
 
@@ -148,16 +208,179 @@ return [
 ];
 ```
 
-**5. Clear audit data before going live (optional)**
+If you set a MySQL root password during XAMPP installation, enter it in the `password` field.
 
-If the SQL file contains demo transaction or reconciliation records, clear them in phpMyAdmin before first use:
+### 5. Clear demo data before going live (optional)
+
+If the SQL file contains demo transaction or reconciliation records, clear them before first use. In phpMyAdmin, select `inventory_db`, click the **SQL** tab, and run:
 
 ```sql
 TRUNCATE TABLE reconciliations;
 TRUNCATE TABLE transactions;
 ```
 
-`reconciliations` must go first. This resets the audit log, active borrow counts, and dashboard figures to zero without touching employee or device records.
+`reconciliations` must be truncated first due to the foreign key constraint. This resets the audit log, active borrow counts, and dashboard figures to zero without affecting employee or device records.
+
+---
+
+## Upgrading an Existing Install
+
+If you are updating from an earlier version of this system (one that was already running with its own database), run the relevant migrations below rather than re-importing `inventory.sql`.
+
+Each migration is safe to run on a database that already has the feature — it uses `IF NOT EXISTS` guards and will not duplicate data.
+
+### Add purpose and expected return date to transactions
+
+Adds the `purpose` and `expected_return_at` columns introduced when borrow details were added to the scan flow.
+
+**File:** `storage/migration_add_purpose_expected_return.sql`
+
+Or run directly in phpMyAdmin → `inventory_db` → **SQL** tab:
+
+```sql
+ALTER TABLE transactions
+    ADD COLUMN IF NOT EXISTS purpose             TEXT        NULL AFTER notes,
+    ADD COLUMN IF NOT EXISTS expected_return_at  DATETIME    NULL AFTER purpose;
+```
+
+### Add the locations table
+
+Required for the Maintenance / cabinet-shelf location feature.
+
+**File:** `storage/migration_add_locations.sql`
+
+Or run directly:
+
+```sql
+CREATE TABLE IF NOT EXISTS locations (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    cabinet    VARCHAR(80) NOT NULL,
+    shelf      VARCHAR(80) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_location (cabinet, shelf)
+) ENGINE=InnoDB;
+
+INSERT IGNORE INTO locations (cabinet, shelf) VALUES
+('Cabinet A', 'Shelf 1'),
+('Cabinet A', 'Shelf 2'),
+('Cabinet A', 'Shelf 3'),
+('Cabinet B', 'Shelf 1'),
+('Cabinet B', 'Shelf 2'),
+('Cabinet C', 'Shelf 1'),
+('Cabinet C', 'Shelf 2'),
+('Cabinet C', 'Shelf 3'),
+('Cabinet 1', 'CBMS 1A'),
+('Cabinet 1', 'CBMS 1B'),
+('Cabinet 1', 'CBMS 1C'),
+('Cabinet 1', 'CBMS 1D'),
+('Cabinet 2', 'CBMS 2A'),
+('Cabinet 2', 'CBMS 2B');
+```
+
+### Add the activity log table
+
+Required for the Admin-only Activity Log page.
+
+**File:** `storage/migration_add_activity_log.sql`
+
+Or run directly:
+
+```sql
+CREATE TABLE IF NOT EXISTS `activity_log` (
+    `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id`     INT UNSIGNED        NULL,
+    `user_name`   VARCHAR(120)    NOT NULL DEFAULT '',
+    `user_role`   VARCHAR(20)     NOT NULL DEFAULT '',
+    `action`      VARCHAR(60)     NOT NULL,
+    `description` TEXT            NOT NULL,
+    `created_at`  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_created` (`created_at`),
+    KEY `idx_user`    (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+> **Fresh installs** using `storage/inventory.sql` get all three tables automatically. These migrations are only needed for databases created before each feature was added.
+
+---
+
+## Known Issues & Fixes
+
+These are bugs identified during development and resolved in the current version. If you are running an older copy, apply the relevant fix.
+
+---
+
+**Borrow form missing purpose and return date fields**
+
+Transactions created before the borrow-details feature was added have `NULL` in the `purpose` and `expected_return_at` columns. The UI handles these gracefully (showing "—" and never flagging them as overdue), but the columns must exist for the feature to work at all.
+
+*Fix:* Run `storage/migration_add_purpose_expected_return.sql` on any database created before this feature was added. See [Upgrading an Existing Install](#upgrading-an-existing-install).
+
+---
+
+**Device dropdowns on Add / Edit form show no cabinet or shelf options**
+
+If the `locations` table does not exist, the cabinet and shelf dropdowns on the device form render empty, and saving a device throws a database error.
+
+*Fix:* Run `storage/migration_add_locations.sql`. See [Upgrading an Existing Install](#upgrading-an-existing-install).
+
+---
+
+**Activity Log page returns a 404 or blank screen**
+
+The `activity_log` table did not exist in the initial schema. If the table is missing, any request to the Activity Log page fails with a database error (visible when `debug` is `true` in `config/app.php`).
+
+*Fix:* Run `storage/migration_add_activity_log.sql`. See [Upgrading an Existing Install](#upgrading-an-existing-install).
+
+---
+
+**Employee still shows active borrows after all devices were returned**
+
+This occurred when a device's status was manually changed to Available (via the Edit form or phpMyAdmin) without closing the associated transaction record. The active borrow counter cross-checks the device's live status and self-corrects on the next page load, but the underlying transaction record remains open.
+
+*Fix:* In phpMyAdmin, find the orphaned row in the `transactions` table (where `returned_at IS NULL` for a device that is currently Available) and set `returned_at` to the correct return timestamp manually.
+
+---
+
+**Overdue flag appearing on indefinite borrows**
+
+In an earlier version, borrows saved without an expected return date were stored as `expected_return_at = '0000-00-00 00:00:00'` instead of `NULL`, causing the overdue check to treat them as long-past-due.
+
+*Fix:* Already resolved in the current schema. For any legacy rows, run the following in phpMyAdmin:
+
+```sql
+UPDATE transactions
+SET expected_return_at = NULL
+WHERE expected_return_at = '0000-00-00 00:00:00';
+```
+
+---
+
+**Camera blocked when accessing over local network IP**
+
+Browsers enforce a secure-context policy: camera access is only permitted on `localhost` or an HTTPS origin. Accessing the app via a LAN IP (e.g. `http://192.168.1.x/inventory/public`) from another device will silently block the camera.
+
+*Fix:* Either access the app from the host machine only (`localhost`), or configure a self-signed SSL certificate in XAMPP for network-wide camera access.
+
+To set up a self-signed certificate in XAMPP:
+1. Open `C:/xampp/apache/conf/extra/httpd-ssl.conf`
+2. Set `ServerName` to your machine's local IP
+3. Point `SSLCertificateFile` and `SSLCertificateKeyFile` to certificate files generated with OpenSSL
+4. Enable the SSL module in `httpd.conf` (`LoadModule ssl_module modules/mod_ssl.so`)
+5. Restart Apache and access the app via `https://192.168.x.x/inventory/public`
+6. Accept the browser's self-signed certificate warning
+
+---
+
+**White screen or PHP error after moving the project folder**
+
+The app derives its base URL from `config/app.php`. If the project is not at `C:/xampp/htdocs/inventory/`, all asset paths and redirects will be wrong.
+
+*Fix:* Update `base_url` in `config/app.php` to match the actual path:
+
+```php
+'base_url' => 'http://localhost/your-folder-name/public',
+```
 
 ---
 
@@ -225,9 +448,10 @@ inventory/
 │   └── database.php         ← DB credentials
 │
 └── storage/
-    ├── inventory.sql                    ← Schema + seed data (import once)
-    ├── migration_add_locations.sql      ← Run on existing installs to add locations table
-    └── migration_add_activity_log.sql   ← Run on existing installs to add activity_log table
+    ├── inventory.sql                            ← Full schema + seed data (import once for fresh installs)
+    ├── migration_add_purpose_expected_return.sql ← Adds purpose and expected_return_at to transactions
+    ├── migration_add_locations.sql              ← Adds the locations table
+    └── migration_add_activity_log.sql           ← Adds the activity_log table
 ```
 
 > **Important:** Only the `public/` folder is served by Apache. All other folders — `app/`, `core/`, `config/`, `storage/` — are never directly accessible from the browser.
@@ -295,38 +519,6 @@ The **Maintenance** page (accessible to Admin and IT Staff) manages the list of 
 
 > **Note:** Removing a location does not affect device records — cabinet and shelf values are stored as plain text on each device. Removing a location only prevents it from appearing in the dropdown going forward.
 
-### First-Time Setup (existing installs only)
-
-If the app was already running before the Maintenance feature was added, run this once in phpMyAdmin → `inventory_db` → **SQL** tab:
-
-```sql
-CREATE TABLE IF NOT EXISTS locations (
-    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    cabinet    VARCHAR(80) NOT NULL,
-    shelf      VARCHAR(80) NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_location (cabinet, shelf)
-) ENGINE=InnoDB;
-
-INSERT IGNORE INTO locations (cabinet, shelf) VALUES
-('Cabinet A', 'Shelf 1'),
-('Cabinet A', 'Shelf 2'),
-('Cabinet A', 'Shelf 3'),
-('Cabinet B', 'Shelf 1'),
-('Cabinet B', 'Shelf 2'),
-('Cabinet C', 'Shelf 1'),
-('Cabinet C', 'Shelf 2'),
-('Cabinet C', 'Shelf 3'),
-('Cabinet 1', 'CBMS 1A'),
-('Cabinet 1', 'CBMS 1B'),
-('Cabinet 1', 'CBMS 1C'),
-('Cabinet 1', 'CBMS 1D'),
-('Cabinet 2', 'CBMS 2A'),
-('Cabinet 2', 'CBMS 2B');
-```
-
-This is also saved as `storage/migration_add_locations.sql` if you prefer to use the Import tab instead. Fresh installs using `storage/inventory.sql` get the table automatically.
-
 ### Changing a Location Name
 
 There is no rename function. To rename a location (e.g. `Cabinet A` → `Storage Room 1`):
@@ -356,27 +548,6 @@ The **Activity Log** page (accessible to Admin only) provides a unified, actor-c
 ### Filtering
 
 The page supports filtering by user, category, and date range — all client-side, no page reload.
-
-### First-Time Setup (existing installs only)
-
-If the app was already running before the Activity Log was added, run this once in phpMyAdmin → `inventory_db` → **SQL** tab:
-
-```sql
-CREATE TABLE IF NOT EXISTS `activity_log` (
-    `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `user_id`     INT UNSIGNED        NULL,
-    `user_name`   VARCHAR(120)    NOT NULL DEFAULT '',
-    `user_role`   VARCHAR(20)     NOT NULL DEFAULT '',
-    `action`      VARCHAR(60)     NOT NULL,
-    `description` TEXT            NOT NULL,
-    `created_at`  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`),
-    KEY `idx_created` (`created_at`),
-    KEY `idx_user`    (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-This is also saved as `storage/migration_add_activity_log.sql`. Fresh installs using `storage/inventory.sql` get the table automatically.
 
 ---
 
@@ -408,7 +579,7 @@ The theme toggle button is in the top of the sidebar.
 | ----- | --------------- | ---------- |
 | **Light** | Default | 🌙 (click to go dark) |
 | **Dark** | Click the toggle once | ☀️ (click to go light) |
-| **Pastel** | Click the toggle 5 times in a row | ✨ (click to return to light) |
+| **Pastel** | … | ✨ (click to return to light) |
 
 Your preference is saved automatically and persists across all pages and sessions.
 
@@ -416,43 +587,45 @@ Your preference is saved automatically and persists across all pages and session
 
 In dark mode, all cards, modals, stat cards, and the agency header have a subtle cyan neon edge glow. Nav items in the sidebar also glow and pulse on hover. These effects are dark mode only and do not appear in light or pastel mode.
 
-### Pastel Mode (Easter Egg)
-
-Clicking the theme button exactly 5 times (not necessarily all in the same direction — just 5 total clicks without landing on pastel) unlocks pastel mode, which applies a soft powder-blue, lilac, and ivory color palette. Click the ✨ button once to return to light mode. The click counter resets on page load, so pastel mode must be unlocked fresh each session (it does persist via `localStorage` across reloads once activated).
-
 ---
 
 ## Troubleshooting
 
 **Page shows no styles**
-The CSS path is not resolving. Confirm the `inventory` folder is placed directly inside `C:/xampp/htdocs/` and that XAMPP is running.
+The CSS path is not resolving. Confirm the `inventory` folder is placed directly inside `C:/xampp/htdocs/` and that XAMPP is running. Also verify `base_url` in `config/app.php` matches the actual URL you are using.
 
 **404 on all pages except the homepage**
-mod_rewrite is not enabled. See step 2 of [Installation](#installation).
+mod_rewrite is not enabled or `.htaccess` overrides are blocked. Follow Step 3 of [Installation](#installation) carefully and restart Apache after saving changes.
 
 **Database connection failed**
-Make sure MySQL is running in the XAMPP Control Panel and that `inventory_db` exists in phpMyAdmin. Check credentials in `config/database.php`.
+Make sure MySQL is running in the XAMPP Control Panel and that `inventory_db` exists in phpMyAdmin. Check credentials in `config/database.php`. If you never set a MySQL password, the `password` field should be an empty string.
+
+**Missing tables (activity_log, locations, etc.)**
+You may be running a database created before those features were added. See [Upgrading an Existing Install](#upgrading-an-existing-install) and run the relevant migration files.
 
 **Camera does not open on the login or scan page**
-The browser requires HTTPS or `localhost` to allow camera access. Accessing the app via an IP address (e.g. `192.168.x.x`) on another device will block the camera — see the note below.
-
-**Accessing from other devices on the network**
-Camera access over a local IP requires HTTPS. The simplest option is to access the app only from the host machine (`localhost`), or set up a self-signed SSL certificate in XAMPP if network-wide access is needed.
+The browser requires HTTPS or `localhost` to allow camera access. Accessing the app via an IP address (e.g. `192.168.x.x`) on another device will block the camera. See the "Camera blocked when accessing over local network IP" entry in [Known Issues & Fixes](#known-issues--fixes).
 
 **White screen after submitting a form**
-Enable debug mode temporarily: open `config/app.php` and set `'debug' => true`. Reload the page to see the full error. Remember to set it back to `false` when done.
+Enable debug mode temporarily: open `config/app.php` and set `'debug' => true`. Reload the page to see the full error. Remember to set it back to `false` in production.
 
 **OPcache serving stale pages after code changes**
 Restart Apache from the XAMPP Control Panel to flush the bytecode cache. A hard browser refresh (Ctrl + Shift + R) alone is not enough when PHP files have changed.
 
 **Theme preference doesn't persist (dark mode, pastel mode)**
-Make sure the browser allows `localStorage`. Incognito/private mode may block it.
+Make sure the browser allows `localStorage`. Incognito / private mode may block it depending on browser settings.
 
 **CSS or JS not updating after changes**
 Hard refresh with **Ctrl + Shift + R** to bypass the browser cache.
 
 **Employee still shows active borrows after all devices returned**
-This can happen if a device was manually set to Available before its transaction was closed. The active borrow count cross-checks against the device's actual status and corrects itself automatically on next page load.
+See "Employee still shows active borrows after all devices returned" in [Known Issues & Fixes](#known-issues--fixes).
+
+**Overdue items appearing for indefinite borrows**
+See "Overdue flag appearing on indefinite borrows" in [Known Issues & Fixes](#known-issues--fixes).
+
+**Borrow / Return form submits but no transaction is recorded**
+The CSRF token may have expired (session timeout). Refresh the page to get a fresh token and try again.
 
 ---
 
