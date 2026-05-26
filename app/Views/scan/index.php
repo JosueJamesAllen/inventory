@@ -67,6 +67,16 @@
             <span class="feedback-icon">📷</span>
             <span class="feedback-text">Waiting for employee QR...</span>
           </div>
+          <div class="manual-entry-wrap">
+            <button type="button" class="manual-toggle" id="borrow-manual-emp-btn" onclick="scanToggleManual('borrow','emp')">Enter code manually</button>
+            <div id="borrow-manual-emp-panel" style="display:none">
+              <div class="manual-input-row">
+                <input type="text" id="borrow-manual-emp-input" class="manual-input" placeholder="Employee QR code" autocomplete="off"
+                  onkeydown="if(event.key==='Enter') scanManualSubmit('borrow','emp')">
+                <button type="button" class="btn btn-sm btn-primary" onclick="scanManualSubmit('borrow','emp')">Go</button>
+              </div>
+            </div>
+          </div>
           <input type="hidden" name="emp_qr" id="borrow-emp-qr">
         </div>
 
@@ -83,6 +93,16 @@
           <div class="scan-feedback" id="borrow-feedback-dev">
             <span class="feedback-icon">🔒</span>
             <span class="feedback-text">Complete Step 1 first</span>
+          </div>
+          <div class="manual-entry-wrap" id="borrow-manual-dev-wrap" style="display:none">
+            <button type="button" class="manual-toggle" id="borrow-manual-dev-btn" onclick="scanToggleManual('borrow','dev')">Enter code manually</button>
+            <div id="borrow-manual-dev-panel" style="display:none">
+              <div class="manual-input-row">
+                <input type="text" id="borrow-manual-dev-input" class="manual-input" placeholder="Device QR code" autocomplete="off"
+                  onkeydown="if(event.key==='Enter') scanManualSubmit('borrow','dev')">
+                <button type="button" class="btn btn-sm btn-primary" onclick="scanManualSubmit('borrow','dev')">Go</button>
+              </div>
+            </div>
           </div>
           <input type="hidden" name="dev_qr" id="borrow-dev-qr">
         </div>
@@ -156,6 +176,16 @@
             <span class="feedback-icon">📷</span>
             <span class="feedback-text">Waiting for employee QR...</span>
           </div>
+          <div class="manual-entry-wrap">
+            <button type="button" class="manual-toggle" id="return-manual-emp-btn" onclick="scanToggleManual('return','emp')">Enter code manually</button>
+            <div id="return-manual-emp-panel" style="display:none">
+              <div class="manual-input-row">
+                <input type="text" id="return-manual-emp-input" class="manual-input" placeholder="Employee QR code" autocomplete="off"
+                  onkeydown="if(event.key==='Enter') scanManualSubmit('return','emp')">
+                <button type="button" class="btn btn-sm btn-primary" onclick="scanManualSubmit('return','emp')">Go</button>
+              </div>
+            </div>
+          </div>
           <input type="hidden" name="emp_qr" id="return-emp-qr">
         </div>
 
@@ -172,6 +202,16 @@
           <div class="scan-feedback" id="return-feedback-dev">
             <span class="feedback-icon">🔒</span>
             <span class="feedback-text">Complete Step 1 first</span>
+          </div>
+          <div class="manual-entry-wrap" id="return-manual-dev-wrap" style="display:none">
+            <button type="button" class="manual-toggle" id="return-manual-dev-btn" onclick="scanToggleManual('return','dev')">Enter code manually</button>
+            <div id="return-manual-dev-panel" style="display:none">
+              <div class="manual-input-row">
+                <input type="text" id="return-manual-dev-input" class="manual-input" placeholder="Device QR code" autocomplete="off"
+                  onkeydown="if(event.key==='Enter') scanManualSubmit('return','dev')">
+                <button type="button" class="btn btn-sm btn-primary" onclick="scanManualSubmit('return','dev')">Go</button>
+              </div>
+            </div>
           </div>
           <input type="hidden" name="dev_qr" id="return-dev-qr">
         </div>
