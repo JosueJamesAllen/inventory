@@ -135,8 +135,10 @@ class ScanController extends BaseController
         $qr     = $this->request->get('qr') ?? '';
         $device = (new Device())->findByQr($qr);
         Response::json([
-            'valid' => (bool) $device,
-            'error' => $device ? null : "QR \"{$this->e($qr)}\" was not found as a device.",
+            'valid'     => (bool) $device,
+            'name'      => $device['name']      ?? null,
+            'asset_tag' => $device['asset_tag'] ?? null,
+            'error'     => $device ? null : "QR \"{$this->e($qr)}\" was not found as a device.",
         ]);
     }
 }

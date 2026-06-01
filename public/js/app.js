@@ -324,13 +324,14 @@ function onDevScanned(prefix, code) {
     }, 2500);
   }
 
-  function acceptScan() {
+  function acceptScan(device) {
+    const label = device ? `${device.name} · ${device.asset_tag}` : code;
     document.getElementById(`${prefix}-dev-qr`).value = code;
     if (lineDev) lineDev.style.display = "none";
     step2Num.classList.remove("active");
     step2Num.classList.add("done");
     step2Num.textContent = "✓";
-    setFeedback(`${prefix}-feedback-dev`, "✅", code, "feedback-success");
+    setFeedback(`${prefix}-feedback-dev`, "✅", label, "feedback-success");
 
     if (prefix === "borrow") {
       const step3El  = document.getElementById("borrow-step3");
@@ -343,7 +344,7 @@ function onDevScanned(prefix, code) {
         if (step3Num) step3Num.classList.add("active");
         if (summary) summary.innerHTML =
           `<span class="confirm-chip">👤 ${empVal}</span>` +
-          `<span class="confirm-chip">💻 ${code}</span>`;
+          `<span class="confirm-chip">💻 ${label}</span>`;
         document.getElementById("borrow-purpose")?.focus();
       }
     } else {
@@ -362,7 +363,7 @@ function onDevScanned(prefix, code) {
     .then(r => r.json())
     .then(data => {
       if (!data.valid) { rejectScan(data.error || "QR not found as a device. Try again."); }
-      else             { acceptScan(); }
+      else             { acceptScan(data); }
     })
     .catch(() => rejectScan("Could not validate QR. Please try again."));
 }
