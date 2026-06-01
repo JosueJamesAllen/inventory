@@ -129,6 +129,18 @@ class ScanController extends BaseController
         Response::redirect('/scan');
     }
 
+    public function checkEmployee(): void
+    {
+        AuthMiddleware::handle();
+        $qr       = $this->request->get('qr') ?? '';
+        $employee = (new Employee())->findByQr($qr);
+        Response::json([
+            'valid' => (bool) $employee,
+            'name'  => $employee['name'] ?? null,
+            'error' => $employee ? null : "QR \"{$this->e($qr)}\" was not found as an employee.",
+        ]);
+    }
+
     public function checkDevice(): void
     {
         AuthMiddleware::handle();

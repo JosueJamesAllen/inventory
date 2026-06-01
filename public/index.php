@@ -62,7 +62,8 @@ $router->get('/',          'DashboardController@index');
 $router->get( '/scan',         'ScanController@index');
 $router->post('/scan/borrow',  'ScanController@borrow');
 $router->post('/scan/return',  'ScanController@return');
-$router->get( '/scan/check-device', 'ScanController@checkDevice');
+$router->get( '/scan/check-device',    'ScanController@checkDevice');
+$router->get( '/scan/check-employee', 'ScanController@checkEmployee');
 
 // Devices
 $router->get( '/devices',            'DeviceController@index');

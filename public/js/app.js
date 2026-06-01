@@ -276,34 +276,59 @@ function setFeedback(id, icon, text, state) {
 }
 
 function onEmpScanned(prefix, code) {
-  const step2El  = document.getElementById(`${prefix}-step2`);
-  const step2Num = document.getElementById(`${prefix}-step2-num`);
-  const step1Num = document.querySelector(`#${prefix}-step1 .step-num`);
-  const lineEmp  = document.getElementById(`${prefix}-line-emp`);
-  const lineDev  = document.getElementById(`${prefix}-line-dev`);
-  const resetBtn = document.getElementById(`${prefix}-reset`);
-  const devWrap  = document.getElementById(`${prefix}-manual-dev-wrap`);
+  const videoEmp  = document.getElementById(`${prefix}-video-emp`);
+  const canvasEmp = document.getElementById(`${prefix}-canvas-emp`);
+  const step2El   = document.getElementById(`${prefix}-step2`);
+  const step2Num  = document.getElementById(`${prefix}-step2-num`);
+  const step1Num  = document.querySelector(`#${prefix}-step1 .step-num`);
+  const lineEmp   = document.getElementById(`${prefix}-line-emp`);
+  const lineDev   = document.getElementById(`${prefix}-line-dev`);
+  const resetBtn  = document.getElementById(`${prefix}-reset`);
+  const devWrap   = document.getElementById(`${prefix}-manual-dev-wrap`);
 
-  document.getElementById(`${prefix}-emp-qr`).value = code;
-  stopCamera(document.getElementById(`${prefix}-video-emp`));
-  if (lineEmp) lineEmp.style.display = "none";
-  step1Num.classList.remove("active");
-  step1Num.classList.add("done");
-  step1Num.textContent = "✓";
-  setFeedback(`${prefix}-feedback-emp`, "✅", code, "feedback-success");
+  stopCamera(videoEmp);
+  setFeedback(`${prefix}-feedback-emp`, "⏳", "Checking...", "feedback-submitting");
 
-  step2El.classList.add("unlocked");
-  step2Num.classList.add("active");
-  if (lineDev) lineDev.style.display = "block";
-  setFeedback(`${prefix}-feedback-dev`, "📷", "Waiting for device QR...", "");
-  if (resetBtn) resetBtn.style.display = "block";
-  if (devWrap) devWrap.style.display = "block";
+  fetch(`/inventory/public/scan/check-employee?qr=${encodeURIComponent(code)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.valid) {
+        setFeedback(`${prefix}-feedback-emp`, "❌", data.error || "Employee QR not found. Try again.", "feedback-error");
+        setTimeout(() => {
+          setFeedback(`${prefix}-feedback-emp`, "📷", "Waiting for employee QR...", "");
+          startCamera(videoEmp, canvasEmp, (empCode) => { beep(); onEmpScanned(prefix, empCode); });
+        }, 2500);
+        return;
+      }
 
-  startCamera(
-    document.getElementById(`${prefix}-video-dev`),
-    document.getElementById(`${prefix}-canvas-dev`),
-    (devCode) => { beep(); onDevScanned(prefix, devCode); }
-  );
+      const displayName = data.name || code;
+      document.getElementById(`${prefix}-emp-qr`).value = code;
+      if (lineEmp) lineEmp.style.display = "none";
+      step1Num.classList.remove("active");
+      step1Num.classList.add("done");
+      step1Num.textContent = "✓";
+      setFeedback(`${prefix}-feedback-emp`, "✅", displayName, "feedback-success");
+
+      step2El.classList.add("unlocked");
+      step2Num.classList.add("active");
+      if (lineDev) lineDev.style.display = "block";
+      setFeedback(`${prefix}-feedback-dev`, "📷", "Waiting for device QR...", "");
+      if (resetBtn) resetBtn.style.display = "block";
+      if (devWrap) devWrap.style.display = "block";
+
+      startCamera(
+        document.getElementById(`${prefix}-video-dev`),
+        document.getElementById(`${prefix}-canvas-dev`),
+        (devCode) => { beep(); onDevScanned(prefix, devCode); }
+      );
+    })
+    .catch(() => {
+      setFeedback(`${prefix}-feedback-emp`, "❌", "Could not validate. Please try again.", "feedback-error");
+      setTimeout(() => {
+        setFeedback(`${prefix}-feedback-emp`, "📷", "Waiting for employee QR...", "");
+        startCamera(videoEmp, canvasEmp, (empCode) => { beep(); onEmpScanned(prefix, empCode); });
+      }, 2500);
+    });
 }
 
 function onDevScanned(prefix, code) {
@@ -456,8 +481,7 @@ function resetScanner(prefix) {
 function continueForSameBorrower() {
   const banner = document.getElementById('continue-banner');
   if (!banner) return;
-  const qr   = banner.dataset.qr;
-  const name = banner.dataset.name;
+  const qr = banner.dataset.qr;
 
   banner.style.display = 'none';
   document.getElementById('type-prompt').style.display = 'none';
@@ -465,7 +489,6 @@ function continueForSameBorrower() {
   activeScannerPrefix = 'borrow';
 
   onEmpScanned('borrow', qr);
-  setFeedback('borrow-feedback-emp', '✅', name, 'feedback-success');
 }
 
 function dismissContinueBanner() {
