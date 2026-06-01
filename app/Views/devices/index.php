@@ -430,8 +430,7 @@ function collectDeviceQrItems() {
     const offset = hasCb ? 1 : 0;
     const name     = cells[offset].querySelector('strong')?.textContent.trim() || '';
     const assetTag = cells[offset + 2].textContent.trim();
-    const qrCode   = cells[offset + 3].textContent.trim();
-    if (qrCode) items.push({ name, sub: assetTag, qr: qrCode });
+    if (assetTag) items.push({ name, sub: assetTag, qr: assetTag });
   });
   return items;
 }
