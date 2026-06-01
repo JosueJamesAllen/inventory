@@ -307,37 +307,64 @@ function onEmpScanned(prefix, code) {
 }
 
 function onDevScanned(prefix, code) {
-  const step2Num = document.getElementById(`${prefix}-step2-num`);
-  const lineDev  = document.getElementById(`${prefix}-line-dev`);
-  const empVal   = document.getElementById(`${prefix}-emp-qr`).value;
-  const form     = document.getElementById(`${prefix}-form`);
+  const step2Num  = document.getElementById(`${prefix}-step2-num`);
+  const lineDev   = document.getElementById(`${prefix}-line-dev`);
+  const empVal    = document.getElementById(`${prefix}-emp-qr`).value;
+  const form      = document.getElementById(`${prefix}-form`);
+  const videoDev  = document.getElementById(`${prefix}-video-dev`);
+  const canvasDev = document.getElementById(`${prefix}-canvas-dev`);
 
-  document.getElementById(`${prefix}-dev-qr`).value = code;
-  stopCamera(document.getElementById(`${prefix}-video-dev`));
-  if (lineDev) lineDev.style.display = "none";
-  step2Num.classList.remove("active");
-  step2Num.classList.add("done");
-  step2Num.textContent = "✓";
-  setFeedback(`${prefix}-feedback-dev`, "✅", code, "feedback-success");
+  stopCamera(videoDev);
 
-  if (prefix === "borrow") {
-    const step3El  = document.getElementById("borrow-step3");
-    const step3Num = document.getElementById("borrow-step3-num");
-    const summary  = document.getElementById("borrow-confirm-summary");
-    if (step3El) {
-      step3El.style.display = "block";
-      step3El.classList.remove("scan-step-locked");
-      step3El.classList.add("unlocked");
-      if (step3Num) step3Num.classList.add("active");
-      if (summary) summary.innerHTML =
-        `<span class="confirm-chip">👤 ${empVal}</span>` +
-        `<span class="confirm-chip">💻 ${code}</span>`;
-      document.getElementById("borrow-purpose")?.focus();
-    }
-  } else {
-    setFeedback(`${prefix}-feedback-emp`, "⏳", "Submitting...", "feedback-submitting");
-    setTimeout(() => form.submit(), 600);
+  function rejectScan(msg) {
+    setFeedback(`${prefix}-feedback-dev`, "❌", msg, "feedback-error");
+    setTimeout(() => {
+      setFeedback(`${prefix}-feedback-dev`, "📷", "Waiting for device QR...", "");
+      startCamera(videoDev, canvasDev, (devCode) => { beep(); onDevScanned(prefix, devCode); });
+    }, 2500);
   }
+
+  function acceptScan() {
+    document.getElementById(`${prefix}-dev-qr`).value = code;
+    if (lineDev) lineDev.style.display = "none";
+    step2Num.classList.remove("active");
+    step2Num.classList.add("done");
+    step2Num.textContent = "✓";
+    setFeedback(`${prefix}-feedback-dev`, "✅", code, "feedback-success");
+
+    if (prefix === "borrow") {
+      const step3El  = document.getElementById("borrow-step3");
+      const step3Num = document.getElementById("borrow-step3-num");
+      const summary  = document.getElementById("borrow-confirm-summary");
+      if (step3El) {
+        step3El.style.display = "block";
+        step3El.classList.remove("scan-step-locked");
+        step3El.classList.add("unlocked");
+        if (step3Num) step3Num.classList.add("active");
+        if (summary) summary.innerHTML =
+          `<span class="confirm-chip">👤 ${empVal}</span>` +
+          `<span class="confirm-chip">💻 ${code}</span>`;
+        document.getElementById("borrow-purpose")?.focus();
+      }
+    } else {
+      setFeedback(`${prefix}-feedback-emp`, "⏳", "Submitting...", "feedback-submitting");
+      setTimeout(() => form.submit(), 600);
+    }
+  }
+
+  if (code === empVal) {
+    rejectScan("That's a person QR, not a device. Scan the device QR.");
+    return;
+  }
+
+  setFeedback(`${prefix}-feedback-dev`, "⏳", "Checking...", "feedback-submitting");
+  fetch(`/inventory/public/scan/check-device?qr=${encodeURIComponent(code)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.valid) { rejectScan(data.error || "QR not found as a device. Try again."); }
+      else             { acceptScan(); }
+    })
+    .catch(() => acceptScan());
 }
 
 function scanToggleManual(prefix, step) {

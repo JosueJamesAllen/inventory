@@ -120,4 +120,17 @@ class ScanController extends BaseController
         Session::flash('success', "&#10003; <strong>{$this->e($device['name'])}</strong> returned. Place it at <strong>{$this->e($device['cabinet'])}, {$this->e($device['shelf'])}</strong>.");
         Response::redirect('/scan');
     }
+
+    public function checkDevice(): void
+    {
+        AuthMiddleware::handle();
+        $qr     = $this->request->get('qr') ?? '';
+        $device = (new Device())->findByQr($qr);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'valid' => (bool) $device,
+            'error' => $device ? null : "QR \"{$this->e($qr)}\" was not found as a device.",
+        ]);
+        exit;
+    }
 }

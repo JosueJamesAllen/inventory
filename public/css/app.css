@@ -1964,6 +1964,10 @@ small {
   background: var(--primary-lt);
   color: var(--primary);
 }
+.scan-feedback.feedback-error {
+  background: var(--red-lt);
+  color: var(--red);
+}
 
 /* ── Manual entry ── */
 .manual-entry-wrap {
