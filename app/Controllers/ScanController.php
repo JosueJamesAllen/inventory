@@ -126,11 +126,9 @@ class ScanController extends BaseController
         AuthMiddleware::handle();
         $qr     = $this->request->get('qr') ?? '';
         $device = (new Device())->findByQr($qr);
-        header('Content-Type: application/json');
-        echo json_encode([
+        Response::json([
             'valid' => (bool) $device,
             'error' => $device ? null : "QR \"{$this->e($qr)}\" was not found as a device.",
         ]);
-        exit;
     }
 }

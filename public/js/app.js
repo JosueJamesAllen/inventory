@@ -364,7 +364,7 @@ function onDevScanned(prefix, code) {
       if (!data.valid) { rejectScan(data.error || "QR not found as a device. Try again."); }
       else             { acceptScan(); }
     })
-    .catch(() => acceptScan());
+    .catch(() => rejectScan("Could not validate QR. Please try again."));
 }
 
 function scanToggleManual(prefix, step) {
