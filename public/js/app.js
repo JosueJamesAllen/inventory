@@ -452,6 +452,27 @@ function resetScanner(prefix) {
   initScanner(prefix);
 }
 
+function continueForSameBorrower() {
+  const banner = document.getElementById('continue-banner');
+  if (!banner) return;
+  const qr   = banner.dataset.qr;
+  const name = banner.dataset.name;
+
+  banner.style.display = 'none';
+  document.getElementById('type-prompt').style.display = 'none';
+  document.getElementById('section-borrow').style.display = 'block';
+  activeScannerPrefix = 'borrow';
+
+  onEmpScanned('borrow', qr);
+  setFeedback('borrow-feedback-emp', '✅', name, 'feedback-success');
+}
+
+function dismissContinueBanner() {
+  const banner = document.getElementById('continue-banner');
+  if (banner) banner.style.display = 'none';
+  document.getElementById('type-prompt').style.display = 'block';
+}
+
 // ── Script loader helper ──────────────────────────────────
 function loadScript(src) {
   return new Promise((resolve, reject) => {

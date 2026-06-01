@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= '//' . $_SERVER['HTTP_HOST'] . '/inventory/public/css/app.css?v=4' ?>">
+  <link rel="stylesheet" href="<?= '//' . $_SERVER['HTTP_HOST'] . '/inventory/public/css/app.css?v=5' ?>">
 </head>
 
 <body>
@@ -133,7 +133,7 @@
 
   </div>
 
-  <script src="/inventory/public/js/app.js?v=2"></script>
+  <script src="/inventory/public/js/app.js?v=3"></script>
 
   <div id="about-overlay" style="display:none">
     <div class="about-card">

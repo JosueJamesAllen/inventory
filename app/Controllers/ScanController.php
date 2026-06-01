@@ -16,10 +16,14 @@ class ScanController extends BaseController
     {
         AuthMiddleware::handle();
 
+        $continueBorrower = $_SESSION['continue_borrower'] ?? null;
+        unset($_SESSION['continue_borrower']);
+
         $this->view('scan.index', [
-            'employees'     => (new Employee())->all(),
-            'availDevices'  => (new Device())->available(),
+            'employees'       => (new Employee())->all(),
+            'availDevices'    => (new Device())->available(),
             'borrowedDevices' => (new Device())->borrowed(),
+            'continueBorrower' => $continueBorrower,
         ]);
     }
 
@@ -66,6 +70,10 @@ class ScanController extends BaseController
         ActivityLog::record('scan.borrow', $borrowDesc);
 
         Session::flash('success', "&#10003; <strong>{$this->e($borrower['name'])}</strong> has borrowed <strong>{$this->e($device['name'])}</strong>.");
+        $_SESSION['continue_borrower'] = [
+            'name' => $borrower['name'],
+            'qr'   => $borrower['qr_code'],
+        ];
         Response::redirect('/scan');
     }
 

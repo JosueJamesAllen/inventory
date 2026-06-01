@@ -5,8 +5,25 @@
   </div>
 </div>
 
+<!-- ── Continue-borrower banner ── -->
+<?php if (!empty($continueBorrower)): ?>
+<div id="continue-banner"
+     data-qr="<?= htmlspecialchars($continueBorrower['qr'],   ENT_QUOTES, 'UTF-8') ?>"
+     data-name="<?= htmlspecialchars($continueBorrower['name'], ENT_QUOTES, 'UTF-8') ?>">
+  <div class="continue-prompt">
+    <div class="continue-avatar">👤</div>
+    <p class="continue-label">Borrow another device for</p>
+    <p class="continue-name"><?= htmlspecialchars($continueBorrower['name']) ?></p>
+    <div class="continue-actions">
+      <button class="btn btn-primary" onclick="continueForSameBorrower()">Yes, scan next device</button>
+      <button class="btn btn-outline" onclick="dismissContinueBanner()">New transaction</button>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
 <!-- ── Transaction Type Prompt ── -->
-<div id="type-prompt">
+<div id="type-prompt"<?= !empty($continueBorrower) ? ' style="display:none"' : '' ?>>
   <div class="tx-prompt">
     <p class="tx-prompt-label">What would you like to do?</p>
     <div class="tx-choices">
