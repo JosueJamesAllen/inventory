@@ -384,7 +384,7 @@ function onDevScanned(prefix, code) {
   }
 
   setFeedback(`${prefix}-feedback-dev`, "⏳", "Checking...", "feedback-submitting");
-  fetch(`/inventory/public/scan/check-device?qr=${encodeURIComponent(code)}`)
+  fetch(`/inventory/public/scan/check-device?qr=${encodeURIComponent(code)}&action=${prefix}`)
     .then(r => r.json())
     .then(data => {
       if (!data.valid) { rejectScan(data.error || "QR not found as a device. Try again."); }

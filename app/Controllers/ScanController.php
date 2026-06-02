@@ -144,13 +144,29 @@ class ScanController extends BaseController
     public function checkDevice(): void
     {
         AuthMiddleware::handle();
-        $qr     = $this->request->get('qr') ?? '';
+        $qr     = $this->request->get('qr')     ?? '';
+        $action = $this->request->get('action') ?? 'borrow';
         $device = (new Device())->findByQr($qr);
+
+        if (!$device) {
+            Response::json(['valid' => false, 'error' => "QR \"{$this->e($qr)}\" was not found as a device."]);
+            return;
+        }
+
+        if ($action === 'borrow' && $device['status'] !== 'available') {
+            Response::json(['valid' => false, 'error' => "{$this->e($device['name'])} is already {$this->e($device['status'])} and cannot be borrowed."]);
+            return;
+        }
+
+        if ($action === 'return' && $device['status'] !== 'borrowed') {
+            Response::json(['valid' => false, 'error' => "{$this->e($device['name'])} is not currently borrowed."]);
+            return;
+        }
+
         Response::json([
-            'valid'     => (bool) $device,
-            'name'      => $device['name']      ?? null,
-            'asset_tag' => $device['asset_tag'] ?? null,
-            'error'     => $device ? null : "QR \"{$this->e($qr)}\" was not found as a device.",
+            'valid'     => true,
+            'name'      => $device['name'],
+            'asset_tag' => $device['asset_tag'],
         ]);
     }
 }

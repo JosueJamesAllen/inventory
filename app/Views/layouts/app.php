@@ -133,7 +133,7 @@
 
   </div>
 
-  <script src="/inventory/public/js/app.js?v=5"></script>
+  <script src="/inventory/public/js/app.js?v=6"></script>
 
   <div id="about-overlay" style="display:none">
     <div class="about-card">
