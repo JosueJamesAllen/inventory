@@ -152,10 +152,8 @@ class DeviceController extends BaseController
             Response::redirect('/devices');
         }
 
-        // If reconciling to available, close any open transactions
-        if ($newStatus === 'available') {
-            (new Transaction())->closeByDevice($id, 'Reconciled: ' . $reason);
-        }
+        // Close any open transaction regardless of target status
+        (new Transaction())->closeByDevice($id, 'Reconciled: ' . $reason);
 
         $deviceModel->setStatus($id, $newStatus);
 
