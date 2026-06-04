@@ -302,7 +302,9 @@ function onEmpScanned(prefix, code) {
       }
 
       const displayName = data.name || code;
-      document.getElementById(`${prefix}-emp-qr`).value = code;
+      const empQrInput = document.getElementById(`${prefix}-emp-qr`);
+      empQrInput.value = code;
+      empQrInput.dataset.name = displayName;
       if (lineEmp) lineEmp.style.display = "none";
       step1Num.classList.remove("active");
       step1Num.classList.add("done");
@@ -334,7 +336,8 @@ function onEmpScanned(prefix, code) {
 function onDevScanned(prefix, code) {
   const step2Num  = document.getElementById(`${prefix}-step2-num`);
   const lineDev   = document.getElementById(`${prefix}-line-dev`);
-  const empVal    = document.getElementById(`${prefix}-emp-qr`).value;
+  const empQrEl   = document.getElementById(`${prefix}-emp-qr`);
+  const empVal    = empQrEl ? (empQrEl.dataset.name || empQrEl.value) : '';
   const form      = document.getElementById(`${prefix}-form`);
   const videoDev  = document.getElementById(`${prefix}-video-dev`);
   const canvasDev = document.getElementById(`${prefix}-canvas-dev`);
@@ -414,46 +417,84 @@ function scanManualSubmit(prefix, step) {
 
 function initScanner(prefix) {
   const videoEmp  = document.getElementById(`${prefix}-video-emp`);
+  if (!videoEmp) {
+    // Borrower mode: no employee camera — skip straight to device scan
+    skipEmpStep(prefix);
+    return;
+  }
   const canvasEmp = document.getElementById(`${prefix}-canvas-emp`);
-  if (!videoEmp) return;
-
   startCamera(videoEmp, canvasEmp, (code) => {
     beep();
     onEmpScanned(prefix, code);
   });
 }
 
+function skipEmpStep(prefix) {
+  const empQrInput = document.getElementById(`${prefix}-emp-qr`);
+  const empName    = empQrInput ? (empQrInput.dataset.name || empQrInput.value) : '';
+  const step2El    = document.getElementById(`${prefix}-step2`);
+  const step2Num   = document.getElementById(`${prefix}-step2-num`);
+  const lineDev    = document.getElementById(`${prefix}-line-dev`);
+  const resetBtn   = document.getElementById(`${prefix}-reset`);
+  const devWrap    = document.getElementById(`${prefix}-manual-dev-wrap`);
+
+  step2El.classList.add("unlocked");
+  step2Num.classList.add("active");
+  if (lineDev) lineDev.style.display = "block";
+  setFeedback(`${prefix}-feedback-dev`, "📷", "Waiting for device QR...", "");
+  if (resetBtn) resetBtn.style.display = "block";
+  if (devWrap) devWrap.style.display = "block";
+
+  startCamera(
+    document.getElementById(`${prefix}-video-dev`),
+    document.getElementById(`${prefix}-canvas-dev`),
+    (devCode) => { beep(); onDevScanned(prefix, devCode); }
+  );
+}
+
 function resetScanner(prefix) {
   stopCamera(document.getElementById(`${prefix}-video-emp`));
   stopCamera(document.getElementById(`${prefix}-video-dev`));
 
-  document.getElementById(`${prefix}-emp-qr`).value = "";
+  const videoEmp     = document.getElementById(`${prefix}-video-emp`);
+  const isBorrower   = !videoEmp; // borrowers have no employee camera element
+  const step2El      = document.getElementById(`${prefix}-step2`);
+  const step2Num     = document.getElementById(`${prefix}-step2-num`);
+
   document.getElementById(`${prefix}-dev-qr`).value = "";
 
-  const step2El = document.getElementById(`${prefix}-step2`);
-  const step2Num = document.getElementById(`${prefix}-step2-num`);
-  step2El.classList.remove("unlocked");
-  step2Num.classList.remove("active", "done");
-  step2Num.textContent = "2";
-  document.getElementById(`${prefix}-line-dev`).style.display = "none";
-  setFeedback(`${prefix}-feedback-dev`, "🔒", "Complete Step 1 first", "");
+  if (!isBorrower) {
+    // Full reset: return to employee scan step
+    document.getElementById(`${prefix}-emp-qr`).value = "";
 
-  const step1Num = document.querySelector(`#${prefix}-step1 .step-num`);
-  step1Num.classList.remove("done");
-  step1Num.classList.add("active");
-  step1Num.textContent = "1";
-  document.getElementById(`${prefix}-line-emp`).style.display = "block";
-  setFeedback(`${prefix}-feedback-emp`, "📷", "Waiting for employee QR...", "");
+    step2El.classList.remove("unlocked");
+    step2Num.classList.remove("active", "done");
+    step2Num.textContent = step2Num.dataset.num || "2";
+    document.getElementById(`${prefix}-line-dev`).style.display = "none";
+    setFeedback(`${prefix}-feedback-dev`, "🔒", "Complete Step 1 first", "");
+
+    const step1Num = document.querySelector(`#${prefix}-step1 .step-num`);
+    step1Num.classList.remove("done");
+    step1Num.classList.add("active");
+    step1Num.textContent = "1";
+    const lineEmp = document.getElementById(`${prefix}-line-emp`);
+    if (lineEmp) lineEmp.style.display = "block";
+    setFeedback(`${prefix}-feedback-emp`, "📷", "Waiting for employee QR...", "");
+  } else {
+    // Partial reset: keep employee step done, only reset device step
+    step2Num.classList.remove("done");
+    document.getElementById(`${prefix}-line-dev`).style.display = "none";
+  }
 
   const resetBtn = document.getElementById(`${prefix}-reset`);
   if (resetBtn) resetBtn.style.display = "none";
 
   // Reset step 3 if borrow
   if (prefix === "borrow") {
-    const step3El = document.getElementById("borrow-step3");
+    const step3El  = document.getElementById("borrow-step3");
     const step3Num = document.getElementById("borrow-step3-num");
     if (step3El) { step3El.style.display = "none"; step3El.classList.remove("unlocked"); }
-    if (step3Num) { step3Num.classList.remove("active", "done"); step3Num.textContent = "3"; }
+    if (step3Num) { step3Num.classList.remove("active", "done"); step3Num.textContent = step3Num.dataset.num || "3"; }
     const purposeInput = document.getElementById("borrow-purpose");
     const dateInput    = document.getElementById("borrow-return-date");
     const cbInput      = document.getElementById("borrow-indefinite");
@@ -474,7 +515,7 @@ function resetScanner(prefix) {
   const devWrap = document.getElementById(`${prefix}-manual-dev-wrap`);
   if (devWrap) devWrap.style.display = "none";
 
-  // Restart step 1 camera
+  // Restart scanner (for borrowers this calls skipEmpStep, jumping straight to device cam)
   initScanner(prefix);
 }
 

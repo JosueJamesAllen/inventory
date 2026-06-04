@@ -1,3 +1,5 @@
+<?php $isBorrower = ($user['role'] === 'borrower'); ?>
+
 <div class="page-header">
   <div>
     <h1>Borrow / Return</h1>
@@ -5,8 +7,8 @@
   </div>
 </div>
 
-<!-- ── Continue-borrower banner ── -->
-<?php if (!empty($continueBorrower)): ?>
+<!-- ── Continue-borrower banner (admins/IT staff only) ── -->
+<?php if (!empty($continueBorrower) && !$isBorrower): ?>
 <div id="continue-banner"
      data-qr="<?= htmlspecialchars($continueBorrower['qr'],   ENT_QUOTES, 'UTF-8') ?>"
      data-name="<?= htmlspecialchars($continueBorrower['name'], ENT_QUOTES, 'UTF-8') ?>">
@@ -23,7 +25,7 @@
 <?php endif; ?>
 
 <!-- ── Transaction Type Prompt ── -->
-<div id="type-prompt"<?= !empty($continueBorrower) ? ' style="display:none"' : '' ?>>
+<div id="type-prompt"<?= (!empty($continueBorrower) && !$isBorrower) ? ' style="display:none"' : '' ?>>
   <div class="tx-prompt">
     <p class="tx-prompt-label">What would you like to do?</p>
     <div class="tx-choices">
@@ -61,7 +63,7 @@
     </button>
     <div>
       <h2>Borrow Device</h2>
-      <p class="page-sub">Scan employee ID then device QR code</p>
+      <p class="page-sub"><?= $isBorrower ? 'Scan the device QR code to borrow it' : 'Scan employee ID then device QR code' ?></p>
     </div>
   </div>
 
@@ -70,6 +72,23 @@
       <form method="POST" action="/inventory/public/scan/borrow" id="borrow-form">
         <?= $csrf ?>
 
+        <?php if ($isBorrower): ?>
+        <!-- Borrower: step 1 pre-completed using session identity -->
+        <div class="scan-step" id="borrow-step1">
+          <div class="step-label">
+            <span class="step-num done">✓</span>
+            <span>Borrower</span>
+          </div>
+          <div class="scan-feedback feedback-success" id="borrow-feedback-emp">
+            <span class="feedback-icon">✅</span>
+            <span class="feedback-text"><?= htmlspecialchars($user['name']) ?></span>
+          </div>
+          <input type="hidden" name="emp_qr" id="borrow-emp-qr"
+                 value="<?= htmlspecialchars($user['qr_code'], ENT_QUOTES, 'UTF-8') ?>"
+                 data-name="<?= htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') ?>">
+        </div>
+        <?php else: ?>
+        <!-- Admin/IT staff: full employee scan step -->
         <div class="scan-step" id="borrow-step1">
           <div class="step-label">
             <span class="step-num active">1</span>
@@ -96,10 +115,11 @@
           </div>
           <input type="hidden" name="emp_qr" id="borrow-emp-qr">
         </div>
+        <?php endif; ?>
 
-        <div class="scan-step scan-step-locked" id="borrow-step2">
+        <div class="scan-step <?= $isBorrower ? 'unlocked' : 'scan-step-locked' ?>" id="borrow-step2">
           <div class="step-label">
-            <span class="step-num" id="borrow-step2-num">2</span>
+            <span class="step-num <?= $isBorrower ? 'active' : '' ?>" id="borrow-step2-num" data-num="<?= $isBorrower ? '1' : '2' ?>"><?= $isBorrower ? '1' : '2' ?></span>
             <span>Scan Device QR Code</span>
           </div>
           <div class="video-wrap">
@@ -108,10 +128,10 @@
             <canvas id="borrow-canvas-dev" hidden></canvas>
           </div>
           <div class="scan-feedback" id="borrow-feedback-dev">
-            <span class="feedback-icon">🔒</span>
-            <span class="feedback-text">Complete Step 1 first</span>
+            <span class="feedback-icon"><?= $isBorrower ? '📷' : '🔒' ?></span>
+            <span class="feedback-text"><?= $isBorrower ? 'Waiting for device QR...' : 'Complete Step 1 first' ?></span>
           </div>
-          <div class="manual-entry-wrap" id="borrow-manual-dev-wrap" style="display:none">
+          <div class="manual-entry-wrap" id="borrow-manual-dev-wrap" style="display:<?= $isBorrower ? 'block' : 'none' ?>">
             <button type="button" class="manual-toggle" id="borrow-manual-dev-btn" onclick="scanToggleManual('borrow','dev')">Enter code manually</button>
             <div id="borrow-manual-dev-panel" style="display:none">
               <div class="manual-input-row">
@@ -127,7 +147,7 @@
         <!-- Step 3 — Borrow details -->
         <div class="scan-step scan-step-locked" id="borrow-step3" style="display:none">
           <div class="step-label">
-            <span class="step-num" id="borrow-step3-num">3</span>
+            <span class="step-num" id="borrow-step3-num" data-num="<?= $isBorrower ? '2' : '3' ?>"><?= $isBorrower ? '2' : '3' ?></span>
             <span>Borrow Details</span>
           </div>
           <div class="borrow-confirm-summary" id="borrow-confirm-summary"></div>
@@ -170,7 +190,7 @@
     </button>
     <div>
       <h2>Return Device</h2>
-      <p class="page-sub">Scan employee ID then device QR code</p>
+      <p class="page-sub"><?= $isBorrower ? 'Scan the device QR code to return it' : 'Scan employee ID then device QR code' ?></p>
     </div>
   </div>
 
@@ -179,6 +199,23 @@
       <form method="POST" action="/inventory/public/scan/return" id="return-form">
         <?= $csrf ?>
 
+        <?php if ($isBorrower): ?>
+        <!-- Borrower: step 1 pre-completed using session identity -->
+        <div class="scan-step" id="return-step1">
+          <div class="step-label">
+            <span class="step-num done">✓</span>
+            <span>Borrower</span>
+          </div>
+          <div class="scan-feedback feedback-success" id="return-feedback-emp">
+            <span class="feedback-icon">✅</span>
+            <span class="feedback-text"><?= htmlspecialchars($user['name']) ?></span>
+          </div>
+          <input type="hidden" name="emp_qr" id="return-emp-qr"
+                 value="<?= htmlspecialchars($user['qr_code'], ENT_QUOTES, 'UTF-8') ?>"
+                 data-name="<?= htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') ?>">
+        </div>
+        <?php else: ?>
+        <!-- Admin/IT staff: full employee scan step -->
         <div class="scan-step" id="return-step1">
           <div class="step-label">
             <span class="step-num active">1</span>
@@ -205,10 +242,11 @@
           </div>
           <input type="hidden" name="emp_qr" id="return-emp-qr">
         </div>
+        <?php endif; ?>
 
-        <div class="scan-step scan-step-locked" id="return-step2">
+        <div class="scan-step <?= $isBorrower ? 'unlocked' : 'scan-step-locked' ?>" id="return-step2">
           <div class="step-label">
-            <span class="step-num" id="return-step2-num">2</span>
+            <span class="step-num <?= $isBorrower ? 'active' : '' ?>" id="return-step2-num" data-num="<?= $isBorrower ? '1' : '2' ?>"><?= $isBorrower ? '1' : '2' ?></span>
             <span>Scan Device QR Code</span>
           </div>
           <div class="video-wrap">
@@ -217,10 +255,10 @@
             <canvas id="return-canvas-dev" hidden></canvas>
           </div>
           <div class="scan-feedback" id="return-feedback-dev">
-            <span class="feedback-icon">🔒</span>
-            <span class="feedback-text">Complete Step 1 first</span>
+            <span class="feedback-icon"><?= $isBorrower ? '📷' : '🔒' ?></span>
+            <span class="feedback-text"><?= $isBorrower ? 'Waiting for device QR...' : 'Complete Step 1 first' ?></span>
           </div>
-          <div class="manual-entry-wrap" id="return-manual-dev-wrap" style="display:none">
+          <div class="manual-entry-wrap" id="return-manual-dev-wrap" style="display:<?= $isBorrower ? 'block' : 'none' ?>">
             <button type="button" class="manual-toggle" id="return-manual-dev-btn" onclick="scanToggleManual('return','dev')">Enter code manually</button>
             <div id="return-manual-dev-panel" style="display:none">
               <div class="manual-input-row">

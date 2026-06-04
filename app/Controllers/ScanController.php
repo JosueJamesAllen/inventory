@@ -32,8 +32,13 @@ class ScanController extends BaseController
         AuthMiddleware::handle();
         $this->request->verifyCsrf();
 
-        $empQr  = $this->request->post('emp_qr');
-        $devQr  = $this->request->post('dev_qr');
+        $currentUser = Session::user();
+
+        // Borrowers can only act for themselves — ignore submitted emp_qr
+        $empQr = ($currentUser['role'] === 'borrower')
+            ? $currentUser['qr_code']
+            : $this->request->post('emp_qr');
+        $devQr = $this->request->post('dev_qr');
 
         $employeeModel = new Employee();
         $deviceModel   = new Device();
@@ -56,8 +61,7 @@ class ScanController extends BaseController
             Response::redirect('/scan');
         }
 
-        $currentUser   = Session::user();
-        $facilitatedBy = ($currentUser['id'] !== $borrower['id']) ? (int)$currentUser['id'] : null;
+        $facilitatedBy = ((int)$currentUser['id'] !== (int)$borrower['id']) ? (int)$currentUser['id'] : null;
         $purpose       = trim($this->request->post('purpose') ?? '');
         $expectedReturn = $this->request->post('expected_return_at') ?: null;
 
@@ -70,10 +74,14 @@ class ScanController extends BaseController
         ActivityLog::record('scan.borrow', $borrowDesc);
 
         Session::flash('success', "&#10003; <strong>{$this->e($borrower['name'])}</strong> has borrowed <strong>{$this->e($device['name'])}</strong>.");
-        $_SESSION['continue_borrower'] = [
-            'name' => $borrower['name'],
-            'qr'   => $borrower['qr_code'],
-        ];
+
+        // Continue-banner only applies to admins/staff facilitating bulk checkouts
+        if ($currentUser['role'] !== 'borrower') {
+            $_SESSION['continue_borrower'] = [
+                'name' => $borrower['name'],
+                'qr'   => $borrower['qr_code'],
+            ];
+        }
         Response::redirect('/scan');
     }
 
@@ -82,7 +90,12 @@ class ScanController extends BaseController
         AuthMiddleware::handle();
         $this->request->verifyCsrf();
 
-        $empQr = $this->request->post('emp_qr');
+        $currentUser = Session::user();
+
+        // Borrowers can only act for themselves — ignore submitted emp_qr
+        $empQr = ($currentUser['role'] === 'borrower')
+            ? $currentUser['qr_code']
+            : $this->request->post('emp_qr');
         $devQr = $this->request->post('dev_qr');
 
         $employeeModel = new Employee();
@@ -114,8 +127,13 @@ class ScanController extends BaseController
             Response::redirect('/scan');
         }
 
-        $currentUser = Session::user();
-        $returnedBy  = ((int)$currentUser['id'] !== (int)$tx['borrower_id']) ? (int)$currentUser['id'] : null;
+        // Borrowers can only return devices they themselves borrowed
+        if ($currentUser['role'] === 'borrower' && (int)$tx['borrower_id'] !== (int)$currentUser['id']) {
+            Session::flash('error', "You can only return devices that you borrowed.");
+            Response::redirect('/scan');
+        }
+
+        $returnedBy = ((int)$currentUser['id'] !== (int)$tx['borrower_id']) ? (int)$currentUser['id'] : null;
 
         $txModel->return((int)$tx['id'], $returnedBy);
         $deviceModel->setStatus((int)$device['id'], 'available');
@@ -161,6 +179,15 @@ class ScanController extends BaseController
         if ($action === 'return' && $device['status'] !== 'borrowed') {
             Response::json(['valid' => false, 'error' => "{$this->e($device['name'])} is not currently borrowed."]);
             return;
+        }
+
+        // Borrowers can only return devices they themselves borrowed
+        if ($action === 'return' && Session::role() === 'borrower') {
+            $tx = (new Transaction())->activeByDevice((int)$device['id']);
+            if ($tx && (int)$tx['borrower_id'] !== (int)Session::user()['id']) {
+                Response::json(['valid' => false, 'error' => "{$this->e($device['name'])} was not borrowed by you."]);
+                return;
+            }
         }
 
         Response::json([
